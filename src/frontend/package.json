@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "dev:web": "next dev --webpack"
   },
   "dependencies": {
     "@emotion/styled": "^11.14.1",
