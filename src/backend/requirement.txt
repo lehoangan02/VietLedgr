@@ -3,3 +3,10 @@ uvicorn
 sqlalchemy
 psycopg2
 python-dotenv
+passlib
+jwt
+pydantic
+pydantic_settings
+PyJWT
+python-multipart
+argon2-cffi 

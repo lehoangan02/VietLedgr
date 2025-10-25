@@ -6,19 +6,45 @@ import { useRouter } from 'next/navigation'
 
 export default function Register() {
    const [name, setName] = useState('')
-   const [email, setEmail] = useState('')
+   const [userType, setUserType] = useState('ADMIN')
+   const [username, setUsername] = useState('')
    const [password, setPassword] = useState('')
    const [confirmPassword, setConfirmPassword] = useState('')
    const [agree, setAgree] = useState(true)
    const [showPassword, setShowPassword] = useState(false)
    const [showConfirm, setShowConfirm] = useState(false)
+   const [error, setError] = useState('')
    const router = useRouter()
 
-   function onSubmit(e: React.FormEvent) {
+async function onSubmit(e: React.FormEvent) {
       e.preventDefault()
-      console.log({ name, email, password, confirmPassword, agree })
-      alert('Sign up submitted (stub)')
+      if (password !== confirmPassword) {
+         setError("Passwords do not match")
+         return
+      }
+      setError('')
+
+      try {
+         const response = await fetch('http://localhost:8000/api/auth/signup', {
+            method: 'POST',
+            headers: {
+               'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({username, password, userType}),
+         })
+
+         if (!response.ok) {
+            throw new Error('Registration failed')
+         }
+
+         const data = await response.json()
+         alert('Registration successful!') // Handle success (e.g., redirect or show message)
+         router.push('/?mode=login') // Redirect to login page
+      } catch (error) {
+         setError(error instanceof Error ? error.message : 'An error occurred')
+      }
    }
+
 
 
    return (
@@ -41,12 +67,12 @@ export default function Register() {
             </div>
 
             <div>
-               <label className="block text-sm font-medium mb-1">Email Address <span className="text-red-500">*</span></label>
+               <label className="block text-sm font-medium mb-1">Username <span className="text-red-500">*</span></label>
                <div className="relative">
                   <input
-                     type="email"
-                     value={email}
-                     onChange={e => setEmail(e.target.value)}
+                     type="username"
+                     value={username}
+                     onChange={e => setUsername(e.target.value)}
                      required
                      className="w-full border rounded-md px-3 py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-orange-300"
                   />

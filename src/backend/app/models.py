@@ -1,6 +1,7 @@
 import uuid
 from datetime import datetime
 from enum import Enum
+from pydantic import BaseModel
 
 from sqlalchemy import (
     UUID,
@@ -15,7 +16,7 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from .database import Base
+from .core.database import Base
 
 
 class UserType(str, Enum):
@@ -37,6 +38,15 @@ class User(Base):
     stores: Mapped[list["Store"]] = relationship(back_populates="owner", cascade="all, delete-orphan")
     ledger_entries: Mapped[list["LedgerEntry"]] = relationship(back_populates="saler")
 
+class UserCreate(Base):
+    __tablename__ = "users_create"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    username: Mapped[str] = mapped_column(String(64), unique=True, nullable=False)
+    password_hash: Mapped[str] = mapped_column(String(128), nullable=False)
+    type: Mapped[UserType] = mapped_column(SQLEnum(UserType, name="user_type"), nullable=False)
 
 class Store(Base):
     __tablename__ = "stores"
@@ -85,3 +95,14 @@ class LedgerEntry(Base):
 
     store: Mapped[Store] = relationship(back_populates="ledger_entries")
     saler: Mapped[User] = relationship(back_populates="ledger_entries")
+
+
+# JSON payload containing access token
+class Token(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+
+
+# Contents of JWT token
+class TokenPayload(BaseModel):
+    sub: str | None = None
