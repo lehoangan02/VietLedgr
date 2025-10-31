@@ -1,17 +1,17 @@
-from datetime import timedelta
+from datetime import timedelta, datetime
 from typing import Annotated, Any
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, Body
 from fastapi.security import OAuth2PasswordRequestForm
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel
 
 from app import crud
-from app.api.deps import CurrentUser, SessionDep
+from app.api.deps import SessionDep
 from app.core import security
 from app.core.config import settings
-from app.core.security import get_password_hash, verify_password
-from app.models import User, UserType, UserCreate
+from app.core.security import verify_password
+from app.models import UserType
 
 router = APIRouter(
     prefix="/auth",   # change from f"{settings.API_STR}/auth"
@@ -23,11 +23,6 @@ class UserSignup(BaseModel):
     username: str
     password: str
     userType: UserType
-
-# Schema for login:
-class UserSignin(BaseModel):
-    username: str
-    password: str
 
 # Schema for password reset
 class PasswordReset(BaseModel):
@@ -56,7 +51,8 @@ def signup(
         db=session,
         username=user_in.username,
         password=user_in.password,
-        type=user_in.userType
+        type=user_in.userType,
+        last_login=datetime.utcnow().isoformat()
     )
 
     # Generate access token
@@ -92,7 +88,11 @@ def login(
     access_token = security.create_access_token(
         subject=str(user.id), expires_delta=access_token_expires
     )
-    
+    crud.update_user(
+        db=session,
+        user_id=user.id,
+        user_in={"last_login": datetime.utcnow().isoformat()}
+    )
     return {
         "access_token": access_token,
         "token_type": "bearer",
@@ -114,8 +114,11 @@ def reset_password(
     
     if not verify_password(passwords.current_password, user.password_hash):
         raise HTTPException(status_code=400, detail="Incorrect password")
-    
-    user_in = {"password": passwords.new_password}
-    user = crud.update_user(session, user_id=user_id, user_in=user_in)
+
+    crud.update_user(
+        db=session,
+        user_id=user.id,
+        user_in={"password": passwords.new_password}
+    )    
     
     return {"message": "Password updated successfully"}
