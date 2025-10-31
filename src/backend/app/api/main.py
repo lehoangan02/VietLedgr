@@ -1,8 +1,5 @@
 from app.api.routes import auth, user
-from fastapi import FastAPI, Depends, APIRouter, HTTPException
-from app.core.config import settings
-from app.core.database import get_db
-from sqlalchemy.orm import Session
+from fastapi import APIRouter
 
 api_router = APIRouter()
 

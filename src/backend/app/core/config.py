@@ -3,11 +3,9 @@ from pathlib import Path
 from pydantic import (
     AnyUrl,
     BeforeValidator,
-    EmailStr,
     HttpUrl,
     PostgresDsn,
-    computed_field,
-    model_validator,
+    computed_field
 )
 from typing import Optional, Any, Literal, Annotated
 from pydantic_settings import SettingsConfigDict, BaseSettings
