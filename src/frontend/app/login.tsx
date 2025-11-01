@@ -140,6 +140,22 @@ export default function Login() {
                <span className="sr-only">GitHub</span>
             </button>
          </div>
+         <CloseTabButton></CloseTabButton>
       </div>
    )
+}
+function CloseTabButton() {
+   const handleClose = () => {
+   window.close();
+   };
+
+
+   return (
+   <button
+   onClick={handleClose}
+   className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
+   >
+   Close Tab
+   </button>
+   );
 }
