@@ -5,7 +5,9 @@ import { GoogleIcon } from '@/app/components/GoogleIcon'
 import { useRouter } from 'next/navigation'
 import { NextApiRequest, NextApiResponse } from 'next'
 
-export default function Login() {
+type Props = { onSuccess?: () => void }
+
+export default function Login({ onSuccess }: Props) {
    const [username, setUsername] = useState('')
    const [password, setPassword] = useState('')
    const [remember, setRemember] = useState(true)
@@ -15,38 +17,39 @@ export default function Login() {
 
 
    async function onSubmit(e: React.FormEvent) {
-    e.preventDefault(); // Prevent default form submission
-    const formBody = new URLSearchParams();
-    formBody.append('username', username);
-    formBody.append('password', password);   
-    console.log("Login")
+      e.preventDefault(); // Prevent default form submission
+      const formBody = new URLSearchParams();
+      formBody.append('username', username);
+      formBody.append('password', password);
+      console.log("Login")
+      onSuccess?.()
 
-    try {
-        // 1. Call your NEXT.JS API route, NOT your FastAPI backend
-        const response = await fetch('http://localhost:8000/api/auth/login', { 
+      try {
+         // 1. Call your NEXT.JS API route, NOT your FastAPI backend
+         const response = await fetch('http://localhost:8000/api/auth/login', {
             method: 'POST',
             // 2. Send JSON to your Next.js API route
             headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
+               'Content-Type': 'application/x-www-form-urlencoded',
             },
             body: formBody.toString(),
-        });
+         });
 
-        const data = await response.json();
+         const data = await response.json();
 
-        if (!response.ok) {
+         if (!response.ok) {
             // Handle login errors from your backend (e.g., "Invalid credentials")
             console.error(data.detail);
-        } else {
+         } else {
             // LOGIN SUCCESS!
             console.log("Access Token:", data.access_token);
             alert("Successfully Login !")
             // Save the token, redirect the user, etc.
-        }
+         }
 
-    } catch (error) {
-        console.error("An error occurred in the frontend:", error);
-    }      
+      } catch (error) {
+         console.error("An error occurred in the frontend:", error);
+      }
    }
 
    return (
