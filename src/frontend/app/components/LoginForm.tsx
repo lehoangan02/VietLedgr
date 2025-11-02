@@ -4,80 +4,56 @@ import { Facebook, Github, Eye, EyeOff } from 'lucide-react'
 import { GoogleIcon } from '@/app/components/GoogleIcon'
 import { useRouter } from 'next/navigation'
 
-<<<<<<<< HEAD:src/frontend/app/login/login.tsx
 type Props = { onSuccess?: () => void }
 
-export default function Login({ onSuccess }: Props) {
-========
-export default function LoginForm() {
->>>>>>>> 50d17311e41d1cb25132ef22ba8fa6de7b3443c1:src/frontend/app/components/LoginForm.tsx
+export default function LoginForm({ onSuccess }: Props) {
    const [username, setUsername] = useState('')
    const [password, setPassword] = useState('')
    const [remember, setRemember] = useState(true)
    const [showPassword, setShowPassword] = useState(false)
-   const [error, setError] = useState('')
+   const [error, setError] = useState<string | null>(null)
    const router = useRouter()
 
-   async function onSubmit(e: React.FormEvent) {
-<<<<<<<< HEAD:src/frontend/app/login/login.tsx
-      e.preventDefault(); // Prevent default form submission
-      const formBody = new URLSearchParams();
-      formBody.append('username', username);
-      formBody.append('password', password);
-      console.log("Login")
-      onSuccess?.()
+   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
+      e.preventDefault()
+      setError(null)
+
+      const formBody = new URLSearchParams()
+      formBody.append('username', username)
+      formBody.append('password', password)
 
       try {
-         // 1. Call your NEXT.JS API route, NOT your FastAPI backend
-         const response = await fetch('http://localhost:8000/api/auth/login', {
-========
-    e.preventDefault()
-    const formBody = new URLSearchParams()
-    formBody.append('username', username)
-    formBody.append('password', password)   
-    console.log("Login")
-
-    try {
-        const response = await fetch('http://localhost:8000/api/auth/login', { 
->>>>>>>> 50d17311e41d1cb25132ef22ba8fa6de7b3443c1:src/frontend/app/components/LoginForm.tsx
+         // adjust endpoint if you proxy or use an internal API route
+         const response = await fetch('/api/auth/login', {
             method: 'POST',
-            headers: {
-               'Content-Type': 'application/x-www-form-urlencoded',
-            },
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
             body: formBody.toString(),
-<<<<<<<< HEAD:src/frontend/app/login/login.tsx
-         });
+         })
 
-         const data = await response.json();
+         const data = await response.json().catch(() => ({}))
 
          if (!response.ok) {
-            // Handle login errors from your backend (e.g., "Invalid credentials")
-            console.error(data.detail);
-         } else {
-            // LOGIN SUCCESS!
-            console.log("Access Token:", data.access_token);
-            alert("Successfully Login !")
-            // Save the token, redirect the user, etc.
+            const msg = (data && (data.detail || data.message)) || 'Login failed'
+            setError(msg)
+            return
          }
 
-      } catch (error) {
-         console.error("An error occurred in the frontend:", error);
+         // success: store token (if present) and navigate
+         const token = (data && (data.access_token || data.token)) as string | undefined
+         if (token) {
+            try {
+               localStorage.setItem('token', token)
+            } catch (e) {
+               // ignore storage errors
+            }
+         }
+
+         onSuccess?.()
+         router.push('/products')
+      } catch (err) {
+         console.error(err)
+         setError('Network error, please try again.')
       }
-========
-        })
-
-        const data = await response.json()
-
-        if (!response.ok) {
-            console.error(data.detail)
-        } else {
-            console.log("Access Token:", data.access_token)
-            alert("Successfully Login !")
-        }
-    } catch (error) {
-        console.error("An error occurred in the frontend:", error)
-    }      
->>>>>>>> 50d17311e41d1cb25132ef22ba8fa6de7b3443c1:src/frontend/app/components/LoginForm.tsx
    }
 
    return (
@@ -90,13 +66,12 @@ export default function LoginForm() {
                <label className="block text-sm font-medium mb-1">Username <span className="text-red-500">*</span></label>
                <div className="relative">
                   <input
-                     type="username"
+                     type="text"
                      required
                      value={username}
                      onChange={e => setUsername(e.target.value)}
                      className="w-full border rounded-md px-3 py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-orange-300"
                   />
-                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400"></div>
                </div>
             </div>
 
@@ -128,6 +103,8 @@ export default function LoginForm() {
                </label>
                <a className="text-sm text-orange-500 hover:underline" href="#">Forgot Password?</a>
             </div>
+
+            {error && <div className="text-sm text-red-600">{error}</div>}
 
             <button type="submit" className="w-full bg-orange-400 text-white py-2 rounded-md">Sign In</button>
          </form>
@@ -171,21 +148,24 @@ export default function LoginForm() {
                <span className="sr-only">GitHub</span>
             </button>
          </div>
-        <CloseTabButton />
+
+         <div className="mt-4">
+            <CloseTabButton />
+         </div>
       </div>
-      
    )
 }
+
 function CloseTabButton() {
    const handleClose = () => {
-   window.close();
-   };
+      try { window.close() } catch { /* ignore */ }
+   }
    return (
-    <button
-        onClick={handleClose}
-        className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
-    >
-    Close Tab
-    </button>
-   );
+      <button
+         onClick={handleClose}
+         className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
+      >
+         Close Tab
+      </button>
+   )
 }
