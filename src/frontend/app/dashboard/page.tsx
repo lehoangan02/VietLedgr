@@ -35,7 +35,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Main Content */}
-      <main className="ml-96 flex-1 p-8 bg-white overflow-y-auto">
+      <main className="ml-96 flex-1 overflow-y-auto">
         {activeView === 'inventory' && (
         <div>
           <Inventory />
