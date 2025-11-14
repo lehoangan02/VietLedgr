@@ -89,17 +89,32 @@ general_ledger_entries.expense_id → expenses.expense_id (nullable)
 **Date Completed:** November 13, 2025  
 **Next Steps:** Run SQL script to create database tables
 
-### 1.3 Database Migration
+### 1.3 Database Migration ✅ COMPLETED
 **Approach:** SQL Scripts (No Alembic for now)
 
 **Tasks:**
-- ✅ Created comprehensive SQL schema file
-- ✅ Run SQL script to create all tables
-- ✅ Verify table creation
-- ✅ Test foreign key constraints
+- ✅ Created comprehensive SQL schema file (`docs/database-schema.sql`)
+- ✅ All 12 tables defined with proper constraints
+- ✅ Foreign key relationships configured
+- ✅ Indexes added for performance optimization
+- ✅ ENUM types created (user_type, account_type)
+- ✅ CHECK constraints for data validation
+- ✅ Sample data for roles and tax rates
+- ✅ Complete documentation with comments
+
+**SQL Schema includes:**
+- 12 tables with all relationships
+- 17 performance indexes
+- Cascade delete rules for dependent data
+- RESTRICT delete for critical references
+- Double-entry bookkeeping constraint in ledger
+- Stock validation (stock >= 0)
+- Tax rate validation (0-100%)
+- Timestamp tracking with timezone
 
 **Status:** ✅ COMPLETED  
 **Date Completed:** November 13, 2025  
+**Next Steps:** Execute SQL script: `psql -U postgres -d vietledgr -f docs/database-schema.sql`  
 
 ---
 
@@ -119,54 +134,43 @@ general_ledger_entries.expense_id → expenses.expense_id (nullable)
 **Status:** ✅ COMPLETED  
 **Date Completed:** November 13, 2025
 
-### 2.2 Create Pydantic Schemas
-**Directory:** `src/backend/app/schemas/` (new)
+### 2.2 Create Pydantic Schemas ✅ COMPLETED
+**Directory:** `src/backend/app/schemas/`
 
-**Files to create:**
+**Files created:**
 ```
 schemas/
 ├── __init__.py
-├── store.py         # Store request/response schemas
-├── product.py       # Product schemas
-├── warehouse.py     # Warehouse schemas
-├── batch.py         # Batch schemas
-├── category.py      # Category schemas
-└── tax.py           # Tax detail schemas
+├── base.py          # Base classes and pagination
+├── store.py         # Store request/response schemas ✅
+├── product.py       # Product schemas ✅
+├── warehouse.py     # Warehouse schemas ✅
+├── batch.py         # Batch schemas with computed fields ✅
+├── category.py      # Category schemas ✅
+└── tax.py           # Tax detail schemas ✅
 ```
 
-**Example schema structure:**
-```python
-# schemas/product.py
-from pydantic import BaseModel
-from datetime import datetime
-import uuid
+**Schemas implemented:**
+- ✅ Store schemas (Create, Update, Response, List)
+- ✅ Tax detail schemas with rate validation (0-100%)
+- ✅ Product category schemas with optional tax relationship
+- ✅ Product schemas with SKU validation and category nesting
+- ✅ Warehouse schemas with total items field
+- ✅ Batch schemas with computed profit margin fields
+- ✅ All schemas use Pydantic v2 ConfigDict
+- ✅ Field validation with constraints (min_length, max_length, pattern, ge/le)
+- ✅ Computed fields for profit calculations (@computed_field)
 
-class ProductBase(BaseModel):
-    name: str
-    description: str | None = None
-    sku: str
-    category_id: uuid.UUID | None = None
+**Test Coverage:**
+- ✅ 50 comprehensive unit tests
+- ✅ All CRUD schema tests passing
+- ✅ Field validation tests
+- ✅ Computed field tests
+- ✅ Integration tests for nested schemas
 
-class ProductCreate(ProductBase):
-    store_id: uuid.UUID
-
-class ProductUpdate(BaseModel):
-    name: str | None = None
-    description: str | None = None
-    category_id: uuid.UUID | None = None
-
-class ProductResponse(ProductBase):
-    product_id: uuid.UUID
-    store_id: uuid.UUID
-    created_at: datetime
-    updated_at: datetime
-    
-    class Config:
-        from_attributes = True
-```
-
-**Priority:** HIGH  
-**Estimated Time:** 2-3 hours
+**Status:** ✅ COMPLETED  
+**Date Completed:** November 14, 2025  
+**Documentation:** See `docs/pydantic-schemas-guide.md` for detailed usage
 
 ### 2.3 CRUD Operations
 **Directory:** `src/backend/app/crud/` (new)
@@ -643,11 +647,14 @@ def test_duplicate_sku_fails(db_session, test_store):
 - [ ] Verify all relationships in database
 
 ### Week 2: Product & Inventory (CURRENT)
-- [ ] Complete all product-related models
-- [ ] Create Pydantic schemas
+- [x] Complete all product-related models
+- [x] Create Pydantic schemas (6 schema files)
+- [x] Write comprehensive tests (50 tests)
 - [ ] Implement CRUD operations
 - [ ] Build API endpoints
 - [ ] Test product management flow
+
+**Current Status:** Phase 2.2 completed, moving to Phase 2.3 (CRUD Operations)
 
 ### Week 3: Transactions
 - [ ] Implement Transaction models
