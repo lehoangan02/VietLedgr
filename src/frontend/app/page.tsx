@@ -9,7 +9,7 @@ export default function Page() {
   const mode = params?.get('mode') || 'login'
 
   return (
-    <div className="w-full max-w-md">
+    <div className='min-h-screen flex items-center justify-center w-full'>
       {mode === 'register' ? <Register /> : <Login />}
     </div>
   )
