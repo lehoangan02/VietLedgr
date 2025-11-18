@@ -22,38 +22,43 @@ export default function LoginForm({ onSuccess }: Props) {
       formBody.append('username', username)
       formBody.append('password', password)
 
-      try {
-         // adjust endpoint if you proxy or use an internal API route
-         const response = await fetch('/api/auth/login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: formBody.toString(),
-         })
+      // try {
+      //    // adjust endpoint if you proxy or use an internal API route
+      //    const response = await fetch('/api/auth/login', {
+      //       method: 'POST',
+      //       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      //       body: formBody.toString(),
+      //    })
 
-         const data = await response.json().catch(() => ({}))
+      //    const data = await response.json().catch(() => ({}))
 
-         if (!response.ok) {
-            const msg = (data && (data.detail || data.message)) || 'Login failed'
-            setError(msg)
-            return
-         }
+      //    if (!response.ok) {
+      //       const msg = (data && (data.detail || data.message)) || 'Login failed'
+      //       setError(msg)
+      //       return
+      //    }
 
-         // success: store token (if present) and navigate
-         const token = (data && (data.access_token || data.token)) as string | undefined
-         if (token) {
-            try {
-               localStorage.setItem('token', token)
-            } catch (e) {
-               // ignore storage errors
-            }
-         }
+      //    // success: store token (if present) and navigate
+      //    const token = (data && (data.access_token || data.token)) as string | undefined
+      //    if (token) {
+      //       try {
+      //          localStorage.setItem('token', token)
+      //       } catch (e) {
+      //          // ignore storage errors
+      //       }
+      //    }
 
+      //    onSuccess?.()
+      //    router.push('/products')
+      // } catch (err) {
+      //    console.error(err)
+      //    setError('Network error, please try again.')
+      // }
+      // Mock success for demonstration purposes
+      setTimeout(() => {
          onSuccess?.()
          router.push('/products')
-      } catch (err) {
-         console.error(err)
-         setError('Network error, please try again.')
-      }
+      }, 500)
    }
 
    return (

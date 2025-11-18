@@ -1,21 +1,32 @@
 'use client'
 import React, { useState } from 'react'
 import { ChevronDown, ChevronRight } from 'lucide-react'
+import { useRouter } from 'next/navigation' // added import
 
 export default function Sidebar() {
+   const router = useRouter() // added router
+
    const sections = [
       { title: 'Main', items: ['Dashboard Report', 'Super Admin'] },
       { title: 'Inventory', items: ['Products', 'Expired Products', 'Low Stocks', 'Category & Brands', 'Print Barcode / QR Code'] },
       { title: 'Stock', items: ['Manage Stock', 'Stock Transfer'] },
       { title: 'Purchases', items: ['Purchase Orders', 'Purchase Returns'] },
       { title: 'Finance & Accounts', items: ['Expense', 'Income', 'Account Statement'] },
-      { title: 'Customers & Supplier', items: ['Customers', 'Suppliers', 'Stores', 'Warehouses'] },
+      { title: 'Customers & Suppliers', items: ['Customers', 'Suppliers', 'Stores', 'Warehouses'] },
       { title: 'Settings', items: [] },
    ]
 
    const [open, setOpen] = useState<Record<string, boolean>>(() =>
       Object.fromEntries(sections.map((s) => [s.title, s.title === 'Inventory'])) // default open Inventory
    )
+
+   // map specific item names to routes
+   const routeMap: Record<string, string> = {
+      Customers: '/customers',
+      Suppliers: '/suppliers',
+      Stores: '/stores',
+      Warehouses: '/warehouses',
+   }
 
    function toggle(title: string) {
       setOpen((prev) => ({ ...prev, [title]: !prev[title] }))
@@ -56,8 +67,16 @@ export default function Sidebar() {
                            {s.items.map((it) => (
                               <li
                                  key={it}
-                                 className={`flex items-center text-sm px-3 py-2 rounded-md hover:bg-orange-50 cursor-pointer ${it === 'Products' ? 'bg-orange-50 font-medium text-orange-600' : 'text-gray-700'
-                                    }`}
+                                 // navigate when the item has a mapped route
+                                 onClick={() => routeMap[it] && router.push(routeMap[it])}
+                                 onKeyDown={(e) => {
+                                    if ((e.key === 'Enter' || e.key === ' ') && routeMap[it]) {
+                                       router.push(routeMap[it])
+                                    }
+                                 }}
+                                 role={routeMap[it] ? 'button' : undefined}
+                                 tabIndex={routeMap[it] ? 0 : undefined}
+                                 className={`flex items-center text-sm px-3 py-2 rounded-md hover:bg-orange-50 ${it === 'Products' ? 'bg-orange-50 font-medium text-orange-600' : 'text-gray-700'} cursor-pointer`}
                               >
                                  <span className="flex-1">{it}</span>
                               </li>
