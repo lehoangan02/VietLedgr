@@ -2,6 +2,8 @@ from pydantic import BaseModel, Field, ConfigDict
 from datetime import datetime
 from uuid import UUID
 from.category import ProductCategoryResponse
+
+
 class ProductBase(BaseModel):
   name: str = Field(..., min_length=1, max_length=255, description="Product name")
   description: str | None = Field(None, max_length=1000, description="Product description")
@@ -11,7 +13,6 @@ class ProductBase(BaseModel):
 class ProductCreate(ProductBase):
   """Create product request"""
   store_id: UUID = Field(..., description="Store ID")
-
 
 class ProductUpdate(BaseModel):
   """Update product request"""

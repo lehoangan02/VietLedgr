@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, Body
 from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import BaseModel
 
-from app import crud
+from app.crud import user
 from app.api.deps import SessionDep
 from app.core import security
 from app.core.config import settings
@@ -39,7 +39,7 @@ def signup(
     Create new user account
     """
     # Check if user exists
-    user = crud.get_user_by_username(session, username=user_in.username)
+    user = user.get_user_by_username(session, username=user_in.username)
     if user:
         raise HTTPException(
             status_code=400,
@@ -47,7 +47,7 @@ def signup(
         )
     
     # Create new user
-    user = crud.create_user(
+    user = user.create_user(
         db=session,
         username=user_in.username,
         password=user_in.password,
@@ -77,7 +77,7 @@ def login(
     """
     OAuth2 compatible token login, authenticate and get an access token for future requests
     """
-    user = crud.get_user_by_username(session, username=form_data.username)
+    user = user.get_user_by_username(session, username=form_data.username)
     if not user:
         raise HTTPException(status_code=400, detail="Incorrect username or password")
     
@@ -88,7 +88,7 @@ def login(
     access_token = security.create_access_token(
         subject=str(user.id), expires_delta=access_token_expires
     )
-    crud.update_user(
+    user.update_user(
         db=session,
         user_id=user.id,
         user_in={"last_login": datetime.utcnow().isoformat()}
@@ -108,14 +108,14 @@ def reset_password(
     """
     Reset user password
     """
-    user = crud.get_user_by_id(session, user_id=user_id)
+    user = user.get_user_by_id(session, user_id=user_id)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     
     if not verify_password(passwords.current_password, user.password_hash):
         raise HTTPException(status_code=400, detail="Incorrect password")
 
-    crud.update_user(
+    user.update_user(
         db=session,
         user_id=user.id,
         user_in={"password": passwords.new_password}
