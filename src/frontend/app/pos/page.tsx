@@ -44,6 +44,9 @@ export default function PosPage() {
    const [query, setQuery] = useState('')
    const [category, setCategory] = useState<string | null>(null)
    const [cart, setCart] = useState<Record<string, CartItem>>({})
+   const [paymentMethod, setPaymentMethod] = useState<string | null>(null)
+   const [qrUrl, setQrUrl] = useState<string | null>(null)
+   const [customerName, setCustomerName] = useState('Bùi Lê Hoàng')
 
    const categories = useMemo(() => Array.from(new Set(MOCK.map((p) => p.category))), [])
 
@@ -83,6 +86,20 @@ export default function PosPage() {
          return copy
       })
    }
+   function generateQR(customerName: string, totalAmount: number) {
+      const bankBin = "970422"
+      const accountNumber = "0898925210"
+      const description = encodeURIComponent(`${customerName} - Payment`)
+      const qr_url = `https://img.vietqr.io/image/${bankBin}-${accountNumber}-qr_only.png?amount=${Math.round(totalAmount)}&addInfo=${description}`
+      setQrUrl(qr_url)
+      setPaymentMethod('qr')
+   }
+
+   const handleSetPayment = (method: string) => {
+      setPaymentMethod(prev => (prev === method ? null : method));
+      setQrUrl(null);
+   };
+
 
    const cartItems = Object.values(cart)
 
@@ -169,7 +186,7 @@ export default function PosPage() {
                   {/* customer select */}
                   <div className="mb-3">
                      <label className="text-sm text-gray-600">Customer</label>
-                     <select className="w-full mt-1 border rounded px-3 py-2">
+                     <select className="w-full mt-1 border rounded px-3 py-2" value={customerName} onChange={(e) => setCustomerName(e.target.value)}>
                         <option>Bùi Lê Hoàng</option>
                      </select>
                   </div>
@@ -257,16 +274,38 @@ export default function PosPage() {
                      <div>
                         <h4 className="text-sm font-semibold mb-2 text-gray-700">Payment Method</h4>
                         <div className="grid grid-cols-3 gap-2">
-                           <button className="px-3 py-2 border-2 border-orange-400 text-orange-500 rounded-md text-sm font-medium bg-orange-50">
+                           <button
+                              onClick={() => handleSetPayment('cash')}
+                              className={`px-3 py-2 border-2 border-gray-200 rounded-md text-sm font-medium ${paymentMethod === 'cash'
+                                 ? 'bg-orange-500 text-white border-orange-500 cursor-pointer'
+                                 : 'text-gray-700 hover:border-blue-400 hover:text-blue-600'}`}>
                               Cash
                            </button>
-                           <button className="px-3 py-2 border-2 border-gray-200 text-gray-700 rounded-md text-sm font-medium hover:border-blue-400 hover:text-blue-600">
+
+                           <button
+                              onClick={() => handleSetPayment('debit')}
+                              className={`px-3 py-2 border-2 border-gray-200 rounded-md text-sm font-medium ${paymentMethod === 'debit'
+                                 ? 'bg-orange-500 text-white border-orange-500 cursor-pointer'
+                                 : 'text-gray-700 hover:border-blue-400 hover:text-blue-600'}`}>
                               Debit Card
                            </button>
-                           <button className="px-3 py-2 border-2 border-gray-200 text-gray-700 rounded-md text-sm font-medium hover:border-blue-400 hover:text-blue-600">
-                              Scan
+
+                           <button
+                              onClick={() => {
+                                 handleSetPayment('qr');
+                                 generateQR(customerName, subtotal);
+                              }}
+                              className={`px-3 py-2 border-2 border-gray-200 rounded-md text-sm font-medium ${paymentMethod === 'qr'
+                                 ? 'bg-orange-500 text-white border-orange-500 cursor-pointer'
+                                 : 'text-gray-700 hover:border-blue-400 hover:text-blue-600'}`}>
+                              Scan QR
                            </button>
+
                         </div>
+                        {qrUrl && (
+                           <div className="mt-2 flex justify-center">
+                              <img src={qrUrl} alt="VietQR" className="w-32 h-32 object-contain" />
+                           </div>)}
                      </div>
 
                      {/* grand total bar */}
