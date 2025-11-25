@@ -6,7 +6,8 @@ from fastapi import APIRouter, Depends, HTTPException, Body
 from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import BaseModel
 
-from app.crud import user
+from app.crud.user import get_user_by_username, create_user, update_user, get_user_by_id
+from app.schemas.user import UserCreate, UserResponse, UserUpdate, UserResetPassword
 from app.api.deps import SessionDep
 from app.core import security
 from app.core.config import settings
@@ -18,28 +19,18 @@ router = APIRouter(
     tags=["auth"]
 )
 
-# Schema for signup
-class UserSignup(BaseModel):
-    username: str
-    password: str
-    userType: UserType
-
-# Schema for password reset
-class PasswordReset(BaseModel):
-    current_password: str
-    new_password: str
 
 @router.post("/signup", response_model=dict)
 def signup(
     *,
     session: SessionDep,
-    user_in: UserSignup,
+    user_in: UserCreate
 ) -> Any:
     """
     Create new user account
     """
     # Check if user exists
-    user = user.get_user_by_username(session, username=user_in.username)
+    user = get_user_by_username(session, username=user_in.username)
     if user:
         raise HTTPException(
             status_code=400,
@@ -47,24 +38,21 @@ def signup(
         )
     
     # Create new user
-    user = user.create_user(
+    user = create_user(
         db=session,
-        username=user_in.username,
-        password=user_in.password,
-        type=user_in.userType,
-        last_login=datetime.utcnow().isoformat()
+        user=user_in
     )
 
     # Generate access token
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = security.create_access_token(
-        subject=str(user.id), expires_delta=access_token_expires
+        subject=str(user.user_id), expires_delta=access_token_expires
     )
     
     return {
         "access_token": access_token,
         "token_type": "bearer",
-        "user_id": str(user.id),
+        "user_id": str(user.user_id),
         "username": user.username,
         "type": user.type
     }
@@ -77,7 +65,7 @@ def login(
     """
     OAuth2 compatible token login, authenticate and get an access token for future requests
     """
-    user = user.get_user_by_username(session, username=form_data.username)
+    user = get_user_by_username(session, username=form_data.username)
     if not user:
         raise HTTPException(status_code=400, detail="Incorrect username or password")
     
@@ -86,12 +74,15 @@ def login(
 
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = security.create_access_token(
-        subject=str(user.id), expires_delta=access_token_expires
+        subject=str(user.user_id), expires_delta=access_token_expires
     )
-    user.update_user(
+    
+    user_update = UserUpdate(last_login=datetime.utcnow())
+
+    update_user(
         db=session,
-        user_id=user.id,
-        user_in={"last_login": datetime.utcnow().isoformat()}
+        user=user_update,
+        user_id=user.user_id
     )
     return {
         "access_token": access_token,
@@ -103,22 +94,24 @@ def reset_password(
     *,
     session: SessionDep,
     user_id: uuid.UUID,
-    passwords: PasswordReset,
+    password: UserResetPassword
 ) -> Any:
     """
     Reset user password
     """
-    user = user.get_user_by_id(session, user_id=user_id)
+    user = get_user_by_id(session, user_id=user_id)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     
-    if not verify_password(passwords.current_password, user.password_hash):
+    if not verify_password(password.old_password, user.password_hash):
         raise HTTPException(status_code=400, detail="Incorrect password")
 
-    user.update_user(
+    user_update = UserUpdate(password=password.new_password)
+
+    update_user(
         db=session,
-        user_id=user.id,
-        user_in={"password": passwords.new_password}
+        user=user_update,
+        user_id=user_id
     )    
     
     return {"message": "Password updated successfully"}
