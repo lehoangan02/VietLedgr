@@ -5,3 +5,4 @@ src/backend/app/alembic/versions/6e5f65b008b4_create_user_table.py
 src/backend/app/alembic/env.py
 src/backend/app/alembic/README
 /src/backend/macEnv
+/src/backend/myenv
