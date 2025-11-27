@@ -1256,6 +1256,1102 @@ Delete a category permanently.
 
 ---
 
+# VietLedgr API Documentation (Continued)
+
+## Transaction Endpoints
+
+Transaction endpoints manage sales transactions with complete double-entry accounting integration.
+
+### Create Transaction
+`POST /api/transactions/`
+
+Create a new sales transaction with items. This operation:
+- Validates stock availability across all items
+- Deducts inventory from batches (FIFO)
+- Calculates tax based on product categories
+- Creates double-entry ledger entries automatically
+- Maintains transaction atomicity
+
+**Request Headers:**
+```
+Authorization: Bearer {token}
+Content-Type: application/json
+```
+
+**Request Body:**
+```json
+{
+  "store_id": "550e8400-e29b-41d4-a716-446655440000",
+  "device_id": "POS-001",
+  "items": [
+    {
+      "batch_id": "990e8400-e29b-41d4-a716-446655440004",
+      "quantity": 5,
+      "price_at_sale": "15.00"
+    },
+    {
+      "batch_id": "aa0e8400-e29b-41d4-a716-446655440005",
+      "quantity": 3,
+      "price_at_sale": "25.00"
+    }
+  ]
+}
+```
+
+**Schema:** [`TransactionCreate`](../src/backend/app/schemas/transaction.py)
+
+**Validation Rules:**
+| Field | Type | Required | Constraints |
+|-------|------|----------|-------------|
+| store_id | UUID | Yes | Must reference existing store |
+| device_id | string | No | Max 100 characters (e.g., POS terminal ID) |
+| items | array | Yes | At least 1 item required |
+| items[].batch_id | UUID | Yes | Must reference existing batch |
+| items[].quantity | integer | Yes | >= 1 |
+| items[].price_at_sale | decimal | Yes | > 0, 2 decimal places |
+
+**Transaction Item Validation:**
+- Stock availability: quantity <= batch.stock
+- Price validation: price_at_sale > 0
+- Batch exists and belongs to same store
+
+**Response (201 Created):**
+```json
+{
+  "transaction_id": "bb0e8400-e29b-41d4-a716-446655440009",
+  "store_id": "550e8400-e29b-41d4-a716-446655440000",
+  "user_id": "cc0e8400-e29b-41d4-a716-446655440010",
+  "device_id": "POS-001",
+  "total_amount": "150.00",
+  "total_tax": "15.00",
+  "created_at": "2025-11-14T14:30:00Z",
+  "items": [
+    {
+      "transaction_item_id": "dd0e8400-e29b-41d4-a716-446655440011",
+      "batch_id": "990e8400-e29b-41d4-a716-446655440004",
+      "quantity": 5,
+      "price_at_sale": "15.00",
+      "cost_at_sale": "10.00",
+      "line_amount": "75.00",
+      "tax_amount": "7.50",
+      "subtotal": "82.50"
+    },
+    {
+      "transaction_item_id": "ee0e8400-e29b-41d4-a716-446655440012",
+      "batch_id": "aa0e8400-e29b-41d4-a716-446655440005",
+      "quantity": 3,
+      "price_at_sale": "25.00",
+      "cost_at_sale": "15.00",
+      "line_amount": "75.00",
+      "tax_amount": "7.50",
+      "subtotal": "82.50"
+    }
+  ],
+  "ledger_entries": [
+    {
+      "entry_id": "ff0e8400-e29b-41d4-a716-446655440013",
+      "account_type": "ASSET",
+      "description": "Cash received from transaction bb0e8400-e29b-41d4-a716-446655440009",
+      "debit_amount": "150.00",
+      "credit_amount": "0.00"
+    },
+    {
+      "entry_id": "gg0e8400-e29b-41d4-a716-446655440014",
+      "account_type": "REVENUE",
+      "description": "Sales revenue from transaction bb0e8400-e29b-41d4-a716-446655440009",
+      "debit_amount": "0.00",
+      "credit_amount": "150.00"
+    },
+    {
+      "entry_id": "hh0e8400-e29b-41d4-a716-446655440015",
+      "account_type": "EXPENSE",
+      "description": "Cost of goods sold for transaction bb0e8400-e29b-41d4-a716-446655440009",
+      "debit_amount": "65.00",
+      "credit_amount": "0.00"
+    },
+    {
+      "entry_id": "ii0e8400-e29b-41d4-a716-446655440016",
+      "account_type": "ASSET",
+      "description": "Inventory reduction for transaction bb0e8400-e29b-41d4-a716-446655440009",
+      "debit_amount": "0.00",
+      "credit_amount": "65.00"
+    }
+  ]
+}
+```
+
+**Calculation Details:**
+
+```
+Item 1:
+  Line Amount = quantity × price_at_sale = 5 × $15.00 = $75.00
+  Tax Rate = 10% (from product category)
+  Tax Amount = $75.00 × 10% = $7.50
+  Subtotal = $75.00 + $7.50 = $82.50
+  COGS = quantity × cost_at_sale = 5 × $10.00 = $50.00
+
+Item 2:
+  Line Amount = 3 × $25.00 = $75.00
+  Tax Amount = $75.00 × 10% = $7.50
+  Subtotal = $75.00 + $7.50 = $82.50
+  COGS = 3 × $15.00 = $45.00
+
+Transaction Totals:
+  Total Amount = $75.00 + $75.00 = $150.00
+  Total Tax = $7.50 + $7.50 = $15.00
+  Total COGS = $50.00 + $45.00 = $65.00
+```
+
+**Ledger Entries Created (Double-Entry Bookkeeping):**
+
+1. **Debit Asset (Cash), Credit Revenue**
+   - Debit: Cash $150.00
+   - Credit: Sales Revenue $150.00
+
+2. **Debit COGS Expense, Credit Inventory**
+   - Debit: Cost of Goods Sold $65.00
+   - Credit: Inventory Asset $65.00
+
+**Error Response (400 Bad Request - Insufficient Stock):**
+```json
+{
+  "detail": "Insufficient stock for batch 990e8400-e29b-41d4-a716-446655440004. Available: 2, Requested: 5"
+}
+```
+
+**Error Response (404 Not Found):**
+```json
+{
+  "detail": "Batch 999e8400-e29b-41d4-a716-446655440099 not found"
+}
+```
+
+**Error Response (403 Forbidden):**
+```json
+{
+  "detail": "User does not have access to this store"
+}
+```
+
+---
+
+### Get Transaction by ID
+`GET /api/transactions/{transaction_id}`
+
+Retrieve a specific transaction with all items and ledger entries.
+
+**Path Parameters:**
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| transaction_id | UUID | The transaction's unique identifier |
+
+**Response (200 OK):**
+```json
+{
+  "transaction_id": "bb0e8400-e29b-41d4-a716-446655440009",
+  "store_id": "550e8400-e29b-41d4-a716-446655440000",
+  "user_id": "cc0e8400-e29b-41d4-a716-446655440010",
+  "device_id": "POS-001",
+  "total_amount": "150.00",
+  "total_tax": "15.00",
+  "created_at": "2025-11-14T14:30:00Z",
+  "items": [ ... ],
+  "ledger_entries": [ ... ]
+}
+```
+
+**Error Response (404 Not Found):**
+```json
+{
+  "detail": "Transaction not found"
+}
+```
+
+---
+
+### List Transactions
+`GET /api/transactions/`
+
+Retrieve paginated transactions for a store.
+
+**Query Parameters:**
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| store_id | UUID | Required | Store identifier |
+| page | integer | 1 | Page number (starting from 1) |
+| page_size | integer | 50 | Items per page (1-100) |
+
+**Example Request:**
+```
+GET /api/transactions/?store_id=550e8400-e29b-41d4-a716-446655440000&page=1&page_size=20
+```
+
+**Response (200 OK):**
+```json
+{
+  "items": [
+    {
+      "transaction_id": "bb0e8400-e29b-41d4-a716-446655440009",
+      "store_id": "550e8400-e29b-41d4-a716-446655440000",
+      "user_id": "cc0e8400-e29b-41d4-a716-446655440010",
+      "device_id": "POS-001",
+      "total_amount": "150.00",
+      "total_tax": "15.00",
+      "created_at": "2025-11-14T14:30:00Z",
+      "items": [ ... ]
+    },
+    {
+      "transaction_id": "cc0e8400-e29b-41d4-a716-446655440011",
+      "store_id": "550e8400-e29b-41d4-a716-446655440000",
+      "user_id": "cc0e8400-e29b-41d4-a716-446655440010",
+      "device_id": "POS-002",
+      "total_amount": "250.00",
+      "total_tax": "25.00",
+      "created_at": "2025-11-14T15:45:00Z",
+      "items": [ ... ]
+    }
+  ],
+  "total": 42,
+  "page": 1,
+  "page_size": 20,
+  "total_pages": 3
+}
+```
+
+---
+
+### Get Transaction Summary
+`GET /api/transactions/summary/report`
+
+Get aggregated transaction statistics for a date range.
+
+**Query Parameters:**
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| store_id | UUID | Required | Store identifier |
+| start_date | datetime | -30 days | ISO 8601 format |
+| end_date | datetime | now | ISO 8601 format |
+
+**Example Request:**
+```
+GET /api/transactions/summary/report?store_id=550e8400-e29b-41d4-a716-446655440000&start_date=2025-10-14T00:00:00Z&end_date=2025-11-14T23:59:59Z
+```
+
+**Response (200 OK):**
+```json
+{
+  "total_transactions": 156,
+  "total_amount": "5250.00",
+  "total_tax": "525.00",
+  "total_items": 423,
+  "average_transaction": "33.65",
+  "date_range_start": "2025-10-14T00:00:00Z",
+  "date_range_end": "2025-11-14T23:59:59Z"
+}
+```
+
+**Summary Calculations:**
+- **Total Transactions**: Count of all transactions in date range
+- **Total Amount**: Sum of total_amount across all transactions (before tax)
+- **Total Tax**: Sum of total_tax across all transactions
+- **Total Items**: Sum of quantities across all transaction items
+- **Average Transaction**: Total Amount / Total Transactions
+
+---
+
+### Void Transaction
+`POST /api/transactions/{transaction_id}/void`
+
+Cancel a transaction and restore inventory. This operation:
+- Restores stock to all batches
+- Deletes transaction items
+- Removes associated ledger entries (via cascade)
+- Maintains data consistency
+
+**Path Parameters:**
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| transaction_id | UUID | The transaction to void |
+
+**Request Body:**
+```json
+{
+  "reason": "Customer returned items - defective products"
+}
+```
+
+**Schema:** [`TransactionUpdate`](../src/backend/app/schemas/transaction.py)
+
+**Validation Rules:**
+| Field | Type | Required | Constraints |
+|-------|------|----------|-------------|
+| reason | string | No | Max 500 characters |
+
+**Response (200 OK):**
+```json
+{
+  "message": "Transaction voided successfully",
+  "transaction_id": "bb0e8400-e29b-41d4-a716-446655440009",
+  "reason": "Customer returned items - defective products",
+  "restored_stock": {
+    "990e8400-e29b-41d4-a716-446655440004": 5,
+    "aa0e8400-e29b-41d4-a716-446655440005": 3
+  }
+}
+```
+
+**Stock Restoration Logic:**
+```
+For each transaction item:
+  batch.stock += item.quantity
+  batch.updated_at = datetime.utcnow()
+
+Example:
+  Item 1: batch_id with stock 95 + 5 = 100
+  Item 2: batch_id with stock 97 + 3 = 100
+```
+
+**Error Response (404 Not Found):**
+```json
+{
+  "detail": "Transaction not found"
+}
+```
+
+---
+
+## Expense Endpoints
+
+Expense endpoints manage business operating expenses with automatic ledger integration.
+
+### Create Expense
+`POST /api/expenses/`
+
+Record a new business expense. Automatically creates double-entry ledger entries.
+
+**Request Body:**
+```json
+{
+  "store_id": "550e8400-e29b-41d4-a716-446655440000",
+  "description": "Office supplies and equipment",
+  "amount": "500.00",
+  "expense_date": "2025-11-14T10:30:00Z"
+}
+```
+
+**Schema:** [`ExpenseCreate`](../src/backend/app/schemas/expense.py)
+
+**Validation Rules:**
+| Field | Type | Required | Constraints |
+|-------|------|----------|-------------|
+| store_id | UUID | Yes | Must reference existing store |
+| description | string | Yes | 1-500 characters |
+| amount | decimal | Yes | > 0, 2 decimal places |
+| expense_date | datetime | No | ISO 8601 format, defaults to now |
+
+**Response (201 Created):**
+```json
+{
+  "expense_id": "jj0e8400-e29b-41d4-a716-446655440017",
+  "store_id": "550e8400-e29b-41d4-a716-446655440000",
+  "user_id": "cc0e8400-e29b-41d4-a716-446655440010",
+  "description": "Office supplies and equipment",
+  "amount": "500.00",
+  "expense_date": "2025-11-14T10:30:00Z",
+  "created_at": "2025-11-14T10:30:00Z",
+  "ledger_entries": [
+    {
+      "entry_id": "kk0e8400-e29b-41d4-a716-446655440018",
+      "store_id": "550e8400-e29b-41d4-a716-446655440000",
+      "account_type": "EXPENSE",
+      "description": "Office supplies and equipment (Expense ID: jj0e8400-e29b-41d4-a716-446655440017)",
+      "debit_amount": "500.00",
+      "credit_amount": "0.00",
+      "entry_date": "2025-11-14T10:30:00Z"
+    },
+    {
+      "entry_id": "ll0e8400-e29b-41d4-a716-446655440019",
+      "store_id": "550e8400-e29b-41d4-a716-446655440000",
+      "account_type": "ASSET",
+      "description": "Cash paid for expense jj0e8400-e29b-41d4-a716-446655440017",
+      "debit_amount": "0.00",
+      "credit_amount": "500.00",
+      "entry_date": "2025-11-14T10:30:00Z"
+    }
+  ]
+}
+```
+
+**Ledger Entries Created (Double-Entry Bookkeeping):**
+
+1. **Debit Expense Account**
+   - Debit: Operating Expense $500.00
+   - Credit: (to be shown in entry 2)
+
+2. **Credit Asset (Cash)**
+   - Debit: (from entry 1)
+   - Credit: Cash Asset $500.00
+
+**Expense Categories:**
+Common expense descriptions for categorization:
+- Office Supplies & Equipment
+- Utilities (electricity, water, internet)
+- Rent & Lease Payments
+- Transportation & Delivery
+- Marketing & Advertising
+- Maintenance & Repairs
+- Insurance & Licenses
+- Employee Training
+- Professional Services (accounting, legal)
+
+**Error Response (400 Bad Request):**
+```json
+{
+  "detail": [
+    {
+      "type": "greater_than",
+      "loc": ["body", "amount"],
+      "msg": "Input should be greater than 0",
+      "input": "0"
+    }
+  ]
+}
+```
+
+---
+
+### Get Expense by ID
+`GET /api/expenses/{expense_id}`
+
+Retrieve a specific expense with associated ledger entries.
+
+**Path Parameters:**
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| expense_id | UUID | The expense's unique identifier |
+
+**Response (200 OK):**
+```json
+{
+  "expense_id": "jj0e8400-e29b-41d4-a716-446655440017",
+  "store_id": "550e8400-e29b-41d4-a716-446655440000",
+  "user_id": "cc0e8400-e29b-41d4-a716-446655440010",
+  "description": "Office supplies and equipment",
+  "amount": "500.00",
+  "expense_date": "2025-11-14T10:30:00Z",
+  "created_at": "2025-11-14T10:30:00Z"
+}
+```
+
+**Error Response (404 Not Found):**
+```json
+{
+  "detail": "Expense not found"
+}
+```
+
+---
+
+### List Expenses
+`GET /api/expenses/`
+
+Retrieve paginated expenses for a store.
+
+**Query Parameters:**
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| store_id | UUID | Required | Store identifier |
+| page | integer | 1 | Page number (starting from 1) |
+| page_size | integer | 50 | Items per page (1-100) |
+
+**Example Request:**
+```
+GET /api/expenses/?store_id=550e8400-e29b-41d4-a716-446655440000&page=1&page_size=20
+```
+
+**Response (200 OK):**
+```json
+{
+  "items": [
+    {
+      "expense_id": "jj0e8400-e29b-41d4-a716-446655440017",
+      "store_id": "550e8400-e29b-41d4-a716-446655440000",
+      "user_id": "cc0e8400-e29b-41d4-a716-446655440010",
+      "description": "Office supplies and equipment",
+      "amount": "500.00",
+      "expense_date": "2025-11-14T10:30:00Z",
+      "created_at": "2025-11-14T10:30:00Z"
+    },
+    {
+      "expense_id": "mm0e8400-e29b-41d4-a716-446655440020",
+      "store_id": "550e8400-e29b-41d4-a716-446655440000",
+      "user_id": "cc0e8400-e29b-41d4-a716-446655440010",
+      "description": "Monthly electricity bill",
+      "amount": "250.00",
+      "expense_date": "2025-11-13T09:00:00Z",
+      "created_at": "2025-11-13T09:00:00Z"
+    }
+  ],
+  "total": 28,
+  "page": 1,
+  "page_size": 20,
+  "total_pages": 2
+}
+```
+
+---
+
+### Update Expense
+`PUT /api/expenses/{expense_id}`
+
+Update an existing expense.
+
+**Path Parameters:**
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| expense_id | UUID | The expense's unique identifier |
+
+**Request Body:**
+```json
+{
+  "description": "Office supplies, equipment, and furniture",
+  "amount": "600.00"
+}
+```
+
+**Schema:** [`ExpenseUpdate`](../src/backend/app/schemas/expense.py)
+
+**Validation Rules:**
+- All fields are optional
+- Only provided fields will be updated
+- amount must be > 0 if provided
+
+**Response (200 OK):**
+```json
+{
+  "expense_id": "jj0e8400-e29b-41d4-a716-446655440017",
+  "store_id": "550e8400-e29b-41d4-a716-446655440000",
+  "user_id": "cc0e8400-e29b-41d4-a716-446655440010",
+  "description": "Office supplies, equipment, and furniture",
+  "amount": "600.00",
+  "expense_date": "2025-11-14T10:30:00Z",
+  "created_at": "2025-11-14T10:30:00Z"
+}
+```
+
+**Note:** Updating an expense does NOT update associated ledger entries. Ledger entries maintain historical accuracy.
+
+---
+
+### Delete Expense
+`DELETE /api/expenses/{expense_id}`
+
+Delete an expense and its associated ledger entries (cascade delete).
+
+**Path Parameters:**
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| expense_id | UUID | The expense to delete |
+
+**Response (204 No Content)**
+
+No response body on successful deletion.
+
+**Error Response (404 Not Found):**
+```json
+{
+  "detail": "Expense not found"
+}
+```
+
+**Deletion Details:**
+- Expense record is deleted
+- Associated ledger entries are automatically deleted (via cascade)
+- No impact on other transactions or expenses
+- Operation is atomic - either fully succeeds or fully fails
+
+---
+
+## Ledger Endpoints
+
+Ledger endpoints provide access to double-entry bookkeeping entries and financial reports.
+
+### Get Ledger Entries
+`GET /api/ledger/entries`
+
+Retrieve general ledger entries with optional filtering.
+
+**Query Parameters:**
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| store_id | UUID | Required | Store identifier |
+| start_date | datetime | None | ISO 8601 format |
+| end_date | datetime | None | ISO 8601 format |
+| account_type | string | None | ASSET, LIABILITY, EQUITY, REVENUE, EXPENSE |
+| page | integer | 1 | Page number (starting from 1) |
+| page_size | integer | 50 | Items per page (1-100) |
+
+**Example Requests:**
+```
+# Get all entries for a store
+GET /api/ledger/entries?store_id=550e8400-e29b-41d4-a716-446655440000
+
+# Get revenue entries for a date range
+GET /api/ledger/entries?store_id=550e8400-e29b-41d4-a716-446655440000&account_type=REVENUE&start_date=2025-11-01T00:00:00Z&end_date=2025-11-30T23:59:59Z
+
+# Get expense entries (paginated)
+GET /api/ledger/entries?store_id=550e8400-e29b-41d4-a716-446655440000&account_type=EXPENSE&page=1&page_size=100
+```
+
+**Response (200 OK):**
+```json
+{
+  "items": [
+    {
+      "entry_id": "ff0e8400-e29b-41d4-a716-446655440013",
+      "store_id": "550e8400-e29b-41d4-a716-446655440000",
+      "account_type": "ASSET",
+      "transaction_id": "bb0e8400-e29b-41d4-a716-446655440009",
+      "expense_id": null,
+      "entry_date": "2025-11-14T14:30:00Z",
+      "description": "Cash received from transaction bb0e8400-e29b-41d4-a716-446655440009",
+      "debit_amount": "150.00",
+      "credit_amount": "0.00",
+      "created_at": "2025-11-14T14:30:00Z"
+    },
+    {
+      "entry_id": "gg0e8400-e29b-41d4-a716-446655440014",
+      "store_id": "550e8400-e29b-41d4-a716-446655440000",
+      "account_type": "REVENUE",
+      "transaction_id": "bb0e8400-e29b-41d4-a716-446655440009",
+      "expense_id": null,
+      "entry_date": "2025-11-14T14:30:00Z",
+      "description": "Sales revenue from transaction bb0e8400-e29b-41d4-a716-446655440009",
+      "debit_amount": "0.00",
+      "credit_amount": "150.00",
+      "created_at": "2025-11-14T14:30:00Z"
+    },
+    {
+      "entry_id": "kk0e8400-e29b-41d4-a716-446655440018",
+      "store_id": "550e8400-e29b-41d4-a716-446655440000",
+      "account_type": "EXPENSE",
+      "transaction_id": null,
+      "expense_id": "jj0e8400-e29b-41d4-a716-446655440017",
+      "entry_date": "2025-11-14T10:30:00Z",
+      "description": "Office supplies and equipment (Expense ID: jj0e8400-e29b-41d4-a716-446655440017)",
+      "debit_amount": "500.00",
+      "credit_amount": "0.00",
+      "created_at": "2025-11-14T10:30:00Z"
+    }
+  ],
+  "total": 156,
+  "page": 1,
+  "page_size": 50,
+  "total_pages": 4
+}
+```
+
+**Account Types:**
+- **ASSET**: Cash, Inventory, Accounts Receivable
+- **LIABILITY**: Accounts Payable, Loans, Taxes Payable
+- **EQUITY**: Owner's Capital, Retained Earnings
+- **REVENUE**: Sales, Service Income
+- **EXPENSE**: Cost of Goods Sold, Operating Expenses
+
+**Entry Relationships:**
+- `transaction_id`: Set if entry came from a transaction
+- `expense_id`: Set if entry came from an expense
+- Both can be null for manual entries (future feature)
+
+---
+
+### Get Trial Balance
+`GET /api/ledger/trial-balance`
+
+Get trial balance report showing total debits and credits by account type.
+
+**Query Parameters:**
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| store_id | UUID | Required | Store identifier |
+| as_of_date | datetime | now | ISO 8601 format |
+
+**Example Request:**
+```
+GET /api/ledger/trial-balance?store_id=550e8400-e29b-41d4-a716-446655440000&as_of_date=2025-11-14T23:59:59Z
+```
+
+**Response (200 OK):**
+```json
+{
+  "store_id": "550e8400-e29b-41d4-a716-446655440000",
+  "as_of_date": "2025-11-14T23:59:59Z",
+  "entries": [
+    {
+      "account_type": "ASSET",
+      "debit_total": "5250.00",
+      "credit_total": "65.00"
+    },
+    {
+      "account_type": "LIABILITY",
+      "debit_total": "0.00",
+      "credit_total": "500.00"
+    },
+    {
+      "account_type": "EQUITY",
+      "debit_total": "0.00",
+      "credit_total": "10000.00"
+    },
+    {
+      "account_type": "REVENUE",
+      "debit_total": "0.00",
+      "credit_total": "2500.00"
+    },
+    {
+      "account_type": "EXPENSE",
+      "debit_total": "1200.00",
+      "credit_total": "0.00"
+    }
+  ],
+  "total_debits": "6450.00",
+  "total_credits": "6450.00",
+  "is_balanced": true
+}
+```
+
+**Trial Balance Calculation:**
+
+```
+Account Type    Debits      Credits
+─────────────────────────────────────
+ASSET          $5,250.00   $65.00
+LIABILITY      $0.00       $500.00
+EQUITY         $0.00       $10,000.00
+REVENUE        $0.00       $2,500.00
+EXPENSE        $1,200.00   $0.00
+─────────────────────────────────────
+TOTALS         $6,450.00   $6,450.00
+
+Status: BALANCED ✓
+```
+
+**Balance Verification:**
+- `is_balanced`: true if total_debits == total_credits
+- Indicates double-entry bookkeeping integrity
+- Should always be true in a properly functioning system
+
+**Interpretation:**
+- **Balanced**: All transactions properly recorded (double-entry)
+- **Not Balanced**: Indicates data integrity issues (should not occur)
+
+---
+
+### Get Income Statement
+`GET /api/ledger/income-statement`
+
+Generate Profit & Loss (Income Statement) report for a period.
+
+**Query Parameters:**
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| store_id | UUID | Required | Store identifier |
+| start_date | datetime | -30 days | ISO 8601 format |
+| end_date | datetime | now | ISO 8601 format |
+
+**Example Request:**
+```
+GET /api/ledger/income-statement?store_id=550e8400-e29b-41d4-a716-446655440000&start_date=2025-10-14T00:00:00Z&end_date=2025-11-14T23:59:59Z
+```
+
+**Response (200 OK):**
+```json
+{
+  "store_id": "550e8400-e29b-41d4-a716-446655440000",
+  "start_date": "2025-10-14T00:00:00Z",
+  "end_date": "2025-11-14T23:59:59Z",
+  "revenue": "2500.00",
+  "cost_of_goods_sold": "1500.00",
+  "gross_profit": "1000.00",
+  "expenses": [
+    {
+      "category": "Office supplies and equipment",
+      "amount": "500.00"
+    },
+    {
+      "category": "Monthly electricity bill",
+      "amount": "250.00"
+    },
+    {
+      "category": "Professional services",
+      "amount": "150.00"
+    }
+  ],
+  "total_expenses": "900.00",
+  "net_income": "100.00"
+}
+```
+
+**Income Statement Calculation:**
+
+```
+REVENUE
+  Sales Revenue (from transactions)           $2,500.00
+────────────────────────────────────────────────────────
+COST OF GOODS SOLD (COGS)
+  Direct product costs                       ($1,500.00)
+────────────────────────────────────────────────────────
+GROSS PROFIT                                  $1,000.00
+
+OPERATING EXPENSES
+  Office supplies and equipment    $500.00
+  Monthly electricity bill         $250.00
+  Professional services            $150.00
+  Total Operating Expenses                     ($900.00)
+────────────────────────────────────────────────────────
+NET INCOME (PROFIT/LOSS)                       $100.00
+```
+
+**Key Metrics:**
+- **Gross Profit Margin**: (Gross Profit / Revenue) × 100 = ($1,000 / $2,500) × 100 = 40%
+- **Net Profit Margin**: (Net Income / Revenue) × 100 = ($100 / $2,500) × 100 = 4%
+- **Operating Expense Ratio**: (Total Expenses / Revenue) × 100 = ($900 / $2,500) × 100 = 36%
+
+**Expense Breakdown:**
+Expenses are grouped by category and summed. If multiple expenses have the same description:
+```
+expenses: [
+  {
+    "category": "Office supplies",
+    "amount": "500.00"  // Aggregated from multiple expense records
+  }
+]
+```
+
+---
+
+### Get Balance Sheet
+`GET /api/ledger/balance-sheet`
+
+Generate Balance Sheet (Statement of Financial Position) report.
+
+**Query Parameters:**
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| store_id | UUID | Required | Store identifier |
+| as_of_date | datetime | now | ISO 8601 format |
+
+**Example Request:**
+```
+GET /api/ledger/balance-sheet?store_id=550e8400-e29b-41d4-a716-446655440000&as_of_date=2025-11-14T23:59:59Z
+```
+
+**Response (200 OK):**
+```json
+{
+  "store_id": "550e8400-e29b-41d4-a716-446655440000",
+  "as_of_date": "2025-11-14T23:59:59Z",
+  "assets": [
+    {
+      "name": "Total Assets",
+      "amount": "5185.00"
+    }
+  ],
+  "total_assets": "5185.00",
+  "liabilities": [
+    {
+      "name": "Total Liabilities",
+      "amount": "500.00"
+    }
+  ],
+  "total_liabilities": "500.00",
+  "equity": [
+    {
+      "name": "Total Equity",
+      "amount": "4685.00"
+    }
+  ],
+  "total_equity": "4685.00"
+}
+```
+
+**Balance Sheet Structure:**
+
+```
+BALANCE SHEET
+As of: 2025-11-14T23:59:59Z
+
+ASSETS
+  Current Assets
+    Cash                              $3,500.00
+    Accounts Receivable               $1,200.00
+    Inventory                           $485.00
+  ────────────────────────────────────────────
+  Total Assets                        $5,185.00
+
+LIABILITIES
+  Current Liabilities
+    Accounts Payable                    $500.00
+  ────────────────────────────────────────────
+  Total Liabilities                     $500.00
+
+EQUITY
+  Owner's Capital                     $10,000.00
+  Retained Earnings (Net Income)         $100.00
+  Drawings/Withdrawals                 ($915.00)
+  ────────────────────────────────────────────
+  Total Equity                        $4,685.00
+
+────────────────────────────────────────────
+TOTAL LIABILITIES + EQUITY              $5,185.00
+```
+
+**Balance Sheet Equation:**
+```
+Assets = Liabilities + Equity
+$5,185.00 = $500.00 + $4,685.00 ✓
+```
+
+**Calculation Method:**
+
+```
+ASSETS (ASSET account type):
+  Debits - Credits = $5,250.00 - $65.00 = $5,185.00
+
+LIABILITIES (LIABILITY account type):
+  Credits - Debits = $500.00 - $0.00 = $500.00
+
+EQUITY (EQUITY account type):
+  Credits - Debits = $10,000.00 - $0.00 = $10,000.00
+
+Plus: Net Income from current period = $100.00
+Adjusting for withdrawals/distributions = ($915.00)
+
+Total Equity = $10,000.00 + $100.00 - $915.00 = $4,685.00
+```
+
+---
+
+## Integration Examples
+
+### Example 1: Complete Transaction & Accounting Workflow
+
+```bash
+# Step 1: Create a transaction with items
+POST /api/transactions/
+{
+  "store_id": "550e8400-e29b-41d4-a716-446655440000",
+  "device_id": "POS-001",
+  "items": [
+    {
+      "batch_id": "990e8400-e29b-41d4-a716-446655440004",
+      "quantity": 5,
+      "price_at_sale": "15.00"
+    }
+  ]
+}
+# Response includes transaction_id and auto-created ledger entries
+
+# Step 2: Record an expense
+POST /api/expenses/
+{
+  "store_id": "550e8400-e29b-41d4-a716-446655440000",
+  "description": "Monthly rent",
+  "amount": "1000.00"
+}
+# Response includes expense_id and auto-created ledger entries
+
+# Step 3: View all ledger entries for the period
+GET /api/ledger/entries?store_id=550e8400-e29b-41d4-a716-446655440000&start_date=2025-11-01T00:00:00Z&end_date=2025-11-30T23:59:59Z
+
+# Step 4: Check financial reports
+GET /api/ledger/trial-balance?store_id=550e8400-e29b-41d4-a716-446655440000
+GET /api/ledger/income-statement?store_id=550e8400-e29b-41d4-a716-446655440000&start_date=2025-11-01T00:00:00Z&end_date=2025-11-30T23:59:59Z
+GET /api/ledger/balance-sheet?store_id=550e8400-e29b-41d4-a716-446655440000&as_of_date=2025-11-30T23:59:59Z
+```
+
+### Example 2: Void Transaction & Restore Inventory
+
+```bash
+# Original transaction created with stock deductions
+POST /api/transactions/
+# Inventory: batch A had 100, now has 95 (5 sold)
+
+# Customer wants to return items
+POST /api/transactions/{transaction_id}/void
+{
+  "reason": "Customer returned defective items"
+}
+
+# Result:
+# - Stock restored: batch A now has 100 again
+# - Ledger entries removed
+# - Transaction marked as voided
+# - No trace in financial reports
+```
+
+### Example 3: Monthly Financial Close
+
+```bash
+# Run at end of month
+GET /api/ledger/trial-balance?store_id=550e8400-e29b-41d4-a716-446655440000&as_of_date=2025-11-30T23:59:59Z
+
+GET /api/ledger/income-statement?store_id=550e8400-e29b-41d4-a716-446655440000&start_date=2025-11-01T00:00:00Z&end_date=2025-11-30T23:59:59Z
+
+GET /api/ledger/balance-sheet?store_id=550e8400-e29b-41d4-a716-446655440000&as_of_date=2025-11-30T23:59:59Z
+
+# Verify:
+# 1. Trial balance is balanced (debits = credits)
+# 2. Income statement shows profitability
+# 3. Balance sheet equation holds (Assets = Liabilities + Equity)
+```
+
+---
+
+## Accounting Principles
+
+### Double-Entry Bookkeeping
+
+Every transaction affects at least two accounts:
+- One account is debited
+- One account is credited
+- Total debits always equal total credits
+
+**Example - Sales Transaction:**
+```
+Debit: Cash (Asset)         $100.00
+Credit: Sales Revenue        $100.00
+────────────────────────────────────
+Debits = Credits ✓
+```
+
+**Example - Expense:**
+```
+Debit: Operating Expense      $50.00
+Credit: Cash (Asset)          $50.00
+────────────────────────────────────
+Debits = Credits ✓
+```
+
+### Account Type Behavior
+
+| Account Type | Normal Balance | Increases With | Decreases With |
+|--------------|---|---|---|
+| ASSET | Debit | Debit | Credit |
+| LIABILITY | Credit | Credit | Debit |
+| EQUITY | Credit | Credit | Debit |
+| REVENUE | Credit | Credit | Debit |
+| EXPENSE | Debit | Debit | Credit |
+
+### Fundamental Accounting Equation
+
+```
+ASSETS = LIABILITIES + EQUITY
+```
+
+This equation must always balance. If it doesn't, there are errors in the ledger.
+
+---
+
 ## Error Handling
 
 All errors follow a consistent format with appropriate HTTP status codes.
@@ -1470,7 +2566,10 @@ All API endpoints are defined in:
 - [src/backend/app/api/routes/warehouse.py](../src/backend/app/api/routes/warehouse.py)
 - [src/backend/app/api/routes/batch.py](../src/backend/app/api/routes/batch.py)
 - [src/backend/app/api/routes/product.py](../src/backend/app/api/routes/product.py)
-
+- [src/backend/app/api/routes/expense.py](../src/backend/app/api/routes/expense.py)
+- [src/backend/app/api/routes/expenses.py](../src/backend/app/api/routes/expenses.py)
+- [src/backend/app/api/routes/ledger.py](../src/backend/app/api/routes/ledger.py)
+- [src/backend/app/api/routes/transactions.py](../src/backend/app/api/routes/transactions.py)
 ---
 
 ## Version History
@@ -1492,5 +2591,5 @@ For issues or questions about the API:
 
 ---
 
-**Last Updated:** November 14, 2025  
-**API Version:** 1.0
+**Last Updated:** November 27, 2025  
+**API Version:** 1.1  
