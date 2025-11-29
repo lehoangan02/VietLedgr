@@ -14,7 +14,7 @@ def read_current_user(
     Get current logged-in user details
     """
     return {
-        "user_id": str(current_user.id),
+        "user_id": str(current_user.user_id),
         "username": current_user.username,
         "type": current_user.type
     }
