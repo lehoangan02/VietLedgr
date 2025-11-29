@@ -13,7 +13,7 @@ from datetime import timezone
 import uuid
 from testing.test_logger import TestLogger
 
-logger = TestLogger("AUTH_UNIT_TEST")
+logger = TestLogger("AUTH_UNIT_TEST_SIGN_UP")
 
 def get_response_data(response):
     """Safely extracts JSON or returns text if JSON parsing fails."""

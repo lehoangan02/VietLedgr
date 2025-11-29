@@ -1,0 +1,14 @@
+TEST: AUTH_UNIT_TEST_LOGIN
+DATE: 2025-11-29 21:31:24.800926
+PASSED: 3 | FAILED: 0
+--------------------------------------------------
+
+[21:31:24] TEST 01: PASSED
+Message: [TEST 01] succeeded.
+
+[21:31:24] TEST 02: PASSED
+Message: [TEST 02] succeeded.
+
+[21:31:24] TEST 03: PASSED
+Message: [TEST 03] succeeded.
+

@@ -1,4 +1,4 @@
-TEST: AUTH_UNIT_TEST
+TEST: AUTH_UNIT_TEST_SIGN_UP
 DATE: 2025-11-29 14:13:59.682106
 PASSED: 5 | FAILED: 1
 --------------------------------------------------
