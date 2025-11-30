@@ -5,7 +5,7 @@ import type { StaticImageData } from 'next/image'
 import { Trash2 } from 'lucide-react'
 import { toast, ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
-import InvoicePrint from '@/app/components/InvoicePrint'
+import InvoicePrint from '@/components/InvoicePrint'
 
 type Product = {
    sku: string
