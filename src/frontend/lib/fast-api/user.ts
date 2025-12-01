@@ -1,42 +1,40 @@
 import { cookies } from "next/headers";
-import { NextResponse } from "next/server";
 
-const FASTAPI_URL = process.env.FASTAPI_URL;
+export type Role = "CASHIER" | "MANAGER" | "ADMIN";
 
-export async function getCurrentUserAPI() {
-    const cookieStore = cookies();
-    const accessToken = (await cookieStore).get('access_token')?.value;
+export type CurrentUser = {
+    id: string;
+    username: string;
+    role: Role;
+} | null;
 
-    if(!accessToken) {
-        return NextResponse.json(
-            {id: null, username: null, role: null},
-            { status: 401 },
-        );
-    }
+const FASTAPI_URL = process.env.FASTAPI_URL!; 
 
-    const res = await fetch(`${FASTAPI_URL}/user/me`, {
+export async function getCurrentUser(): Promise<CurrentUser> {
+    const cookieStore = await cookies();
+    const accessToken = cookieStore.get("access_token")?.value;
+
+    if (!accessToken) return null;
+
+    const res = await fetch(`${FASTAPI_URL}/api/user/me`, {
         method: "GET",
         headers: {
-            Authorization: `Bearer ${accessToken}`,
+        Authorization: `Bearer ${accessToken}`,
         },
+        cache: "no-store",
     });
 
-    if(!res.ok) {
-        return NextResponse.json(
-            { id: null, username: null, role: null },
-            { status: res.status },
-        );
-    }
+    if (!res.ok) return null;
 
-    const data = await res.json() as {
+    const data = (await res.json()) as {
         user_id: string;
         username: string;
-        type: string;
+        type: Role; 
     };
 
-    return NextResponse.json({
+    return {
         id: data.user_id,
         username: data.username,
         role: data.type,
-    });
+    };
 }

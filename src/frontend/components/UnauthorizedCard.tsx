@@ -35,7 +35,7 @@ export function UnauthorizedCard() {
 
                 <div className="flex flex-col gap-2 sm:flex-row sm:gap-3">
                 <Button asChild>
-                    <Link href="/">Back to home</Link>
+                    <Link href="/login">Back to home</Link>
                 </Button>
                 </div>
 

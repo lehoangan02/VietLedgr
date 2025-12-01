@@ -11,7 +11,7 @@ export default function DashboardPage() {
       {/* Sidebar */}
       <div className="fixed top-0 left-0 h-screen w-96 bg-gray-800 p-4 text-white overflow-y-auto">
         <div className="flex items-center gap-3 mb-4">
-            <Image src="corner_logo.webp" alt="Logo" className="w-16 h-16 rounded-xl object-cover"/>
+            <Image src="/corner_logo.webp" alt="Logo" className="w-16 h-16 rounded-xl object-cover" width={16} height={16}/>
             <h2 className="text-xl font-bold">VietLedgr</h2>
         </div>
         <ul className="space-y-2">
