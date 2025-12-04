@@ -17,7 +17,7 @@ from app.schemas.transaction import (
 )
 
 router = APIRouter(
-    prefix="/api/transactions",
+    prefix="/transactions",
     tags=["transactions"],
 )
 

@@ -16,7 +16,7 @@ from app.schemas.expense import (
 )
 
 router = APIRouter(
-    prefix="/api/ledger",
+    prefix="/ledger",
     tags=["ledger"],
 )
 
