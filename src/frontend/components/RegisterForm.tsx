@@ -1,7 +1,7 @@
 'use client'
 import React, { useState } from 'react'
 import { Facebook, Github, Eye, EyeOff } from 'lucide-react'
-import { GoogleIcon } from '@/app/components/GoogleIcon'
+import { GoogleIcon } from '@/components/GoogleIcon'
 import { useRouter } from 'next/navigation'
 
 export default function RegisterForm() {

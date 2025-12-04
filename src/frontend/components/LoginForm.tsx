@@ -1,12 +1,11 @@
 'use client'
 import React, { useState } from 'react'
 import { Facebook, Github, Eye, EyeOff } from 'lucide-react'
-import { GoogleIcon } from '@/app/components/GoogleIcon'
+import { GoogleIcon } from '@/components/GoogleIcon'
 import { useRouter } from 'next/navigation'
+import { postLogin } from '@/lib/fast-api/auth'
 
-type Props = { onSuccess?: () => void }
-
-export default function LoginForm({ onSuccess }: Props) {
+export default function LoginForm() {
    const [username, setUsername] = useState('')
    const [password, setPassword] = useState('')
    const [remember, setRemember] = useState(true)
@@ -18,47 +17,17 @@ export default function LoginForm({ onSuccess }: Props) {
       e.preventDefault()
       setError(null)
 
-      const formBody = new URLSearchParams()
-      formBody.append('username', username)
-      formBody.append('password', password)
+      const formData = new FormData(e.currentTarget);
 
-      // try {
-      //    // adjust endpoint if you proxy or use an internal API route
-      //    const response = await fetch('/api/auth/login', {
-      //       method: 'POST',
-      //       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      //       body: formBody.toString(),
-      //    })
-
-      //    const data = await response.json().catch(() => ({}))
-
-      //    if (!response.ok) {
-      //       const msg = (data && (data.detail || data.message)) || 'Login failed'
-      //       setError(msg)
-      //       return
-      //    }
-
-      //    // success: store token (if present) and navigate
-      //    const token = (data && (data.access_token || data.token)) as string | undefined
-      //    if (token) {
-      //       try {
-      //          localStorage.setItem('token', token)
-      //       } catch (e) {
-      //          // ignore storage errors
-      //       }
-      //    }
-
-      //    onSuccess?.()
-      //    router.push('/products')
-      // } catch (err) {
-      //    console.error(err)
-      //    setError('Network error, please try again.')
-      // }
-      // Mock success for demonstration purposes
-      setTimeout(() => {
-         onSuccess?.()
-         router.push('/products')
-      }, 500)
+      try {
+         await postLogin(formData);
+         setError(null);
+         router.refresh();
+         
+      } catch (err) {
+         const message = err instanceof Error ? err.message : String(err);
+         setError(message || "Login failed");
+      }
    }
 
    return (
@@ -71,6 +40,7 @@ export default function LoginForm({ onSuccess }: Props) {
                <label className="block text-sm font-medium mb-1">Username <span className="text-red-500">*</span></label>
                <div className="relative">
                   <input
+                     name="username"
                      type="text"
                      required
                      value={username}
@@ -84,6 +54,7 @@ export default function LoginForm({ onSuccess }: Props) {
                <label className="block text-sm font-medium mb-1">Password <span className="text-red-500">*</span></label>
                <div className="relative">
                   <input
+                     name="password"
                      type={showPassword ? 'text' : 'password'}
                      required
                      value={password}

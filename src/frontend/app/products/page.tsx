@@ -1,6 +1,6 @@
 import React from 'react'
-import Sidebar from '@/app/components/sidebar'
-import ProductTable from '@/app/components/productTable'
+import Sidebar from '@/components/SideBar'
+import ProductTable from '@/components/productTable'
 
 export default function ProductsPage() {
    return (
