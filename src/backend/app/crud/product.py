@@ -2,6 +2,7 @@ from typing import Any, Dict, Optional, List
 from sqlalchemy.orm import Session
 from app import models
 from ..schemas.product import ProductCreate, ProductUpdate
+from app.core.imageBase64Converter import ImageBase64Converter
 import uuid
 
 def create_product(
@@ -12,6 +13,18 @@ def create_product(
     Validate incoming data with ProductCreate (pydantic) and create a new product. (Product)
     """
     payload = product.model_dump()
+    if (payload.get("image_base64") is None):
+        retail_category = payload.get("retail_category", "OTHERS")
+        converter = ImageBase64Converter()
+        if retail_category == "FOOD":
+            payload["image_base64"] = converter.image_to_base64("./public/images/healthy-food.png")
+        elif retail_category == "HOUSEHOLD":
+            payload["image_base64"] = converter.image_to_base64("./public/images/appliance.png")
+        elif retail_category == "STATIONERY":
+            payload["image_base64"] = converter.image_to_base64("./public/images/stationery.png")
+        else:
+            payload["image_base64"] = converter.image_to_base64("./public/images/default-item.png")
+
     db_product = models.Product(**payload)
     db.add(db_product)
     db.commit()
