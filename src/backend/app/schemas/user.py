@@ -17,8 +17,10 @@ class UserBase(BaseModel):
     role_id: uuid.UUID
 
 
-class UserCreate(UserBase):
+class UserCreate(BaseModel):
+    username: str
     password: str
+    invite_code: str
 
 
 class UserUpdate(BaseModel):
@@ -26,6 +28,7 @@ class UserUpdate(BaseModel):
     password: Optional[str] = None
     store_id: Optional[uuid.UUID] = None
     role_id: Optional[uuid.UUID] = None
+    last_login: Optional[datetime] = None
 
 
 class UserResetPassword(BaseModel):
