@@ -1,10 +1,8 @@
-from fastapi import APIRouter
 from app.api.deps import CurrentUser
+from fastapi import APIRouter
 
-router = APIRouter(
-    prefix="/user",
-    tags=["user"]
-)
+router = APIRouter(prefix="/user", tags=["user"])
+
 
 @router.get("/me", response_model=dict)
 def read_current_user(
@@ -16,5 +14,6 @@ def read_current_user(
     return {
         "user_id": str(current_user.user_id),
         "username": current_user.username,
-        "type": current_user.type
+        "role_id": str(current_user.role_id),
+        "role_name": str(current_user.role.name),
     }
