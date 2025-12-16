@@ -5,18 +5,23 @@ from app import models
 from app.schemas import user as user_schemas
 from sqlalchemy.orm import Session
 
-from ..core.security import get_password_hash
+from app.core.security import get_password_hash
 
 
-def create_user(db: Session, user: user_schemas.UserCreate) -> models.User:
+def create_user(
+    db: Session, 
+    user: user_schemas.UserCreate,
+    store_id: uuid.UUID,
+    role_id: uuid.UUID
+) -> models.User:
     """
     Create a new user in the database
     """
     db_user = models.User(
         username=user.username,
         password_hash=get_password_hash(user.password),
-        store_id=user.store_id,
-        role_id=user.role_id,
+        store_id=store_id,
+        role_id=role_id,
     )
     db.add(db_user)
     db.commit()
