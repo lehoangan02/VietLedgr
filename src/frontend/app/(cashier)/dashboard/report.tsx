@@ -2,16 +2,16 @@
 import React, { useMemo } from 'react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
-  LineChart, Line, ComposedChart
+  LineChart, Line, ComposedChart, Cell
 } from 'recharts';
 
 // --- Theme Colors ---
-const REV_25 = "#3b82f6"; // Primary Blue
-const REV_24 = "#94a3b8"; // Muted Gray
-const PROFIT_25 = "#10b981"; // Emerald
-const PROFIT_24 = "#6ee7b7"; // Light Emerald
+const REV_25 = "#3b82f6";
+const REV_24 = "#94a3b8";
+const PROFIT_25 = "#10b981";
+const PROFIT_24 = "#6ee7b7";
 
-// --- Data based on RetailCategory Enum ---
+// --- Mock Data ---
 const CATEGORY_SALES = [
   { name: 'FOOD', sales: 80000000, tax: 8000000, profit: 25000000 },
   { name: 'HOUSEHOLD', sales: 45000000, tax: 4500000, profit: 12000000 },
@@ -19,7 +19,6 @@ const CATEGORY_SALES = [
   { name: 'OTHERS', sales: 5000000, tax: 500000, profit: 1500000 },
 ];
 
-// --- Comparative Data (Millions VND) ---
 const MONTHLY_PERFORMANCE = [
   { month: 'Jan', rev24: 120, rev25: 150, prof24: 35, prof25: 45 },
   { month: 'Feb', rev24: 130, rev25: 145, prof24: 38, prof25: 40 },
@@ -35,19 +34,28 @@ const MONTHLY_PERFORMANCE = [
   { month: 'Dec', rev24: 200, rev25: 310, prof24: 70, prof25: 130 },
 ];
 
+const BEST_SELLERS = [
+  { name: 'Instant Noodles (Spicy)', units: 1204, growth: '+12%' },
+  { name: 'Organic Jasmine Rice', units: 850, growth: '+8%' },
+  { name: 'Condensed Milk', units: 640, growth: '+15%' },
+];
+
+const WORST_SELLERS = [
+  { name: 'Old Brand Detergent', units: 12, growth: '-40%' },
+  { name: 'Plastic Rulers', units: 5, growth: '-60%' },
+];
+
 const LOW_STOCK_ITEMS = [
   { name: 'Rice 5kg', stock: 5, min: 20, cat: 'FOOD' },
   { name: 'Notebook A5', stock: 2, min: 15, cat: 'STATIONERY' },
-  { name: 'Cooking Oil', stock: 4, min: 12, cat: 'FOOD' },
 ];
 
 const EXPIRING_ITEMS = [
   { name: 'Fresh Milk 1L', days: 2, batch: 'B-811' },
-  { name: 'Greek Yogurt', days: 1, batch: 'B-902' },
 ];
 
 export default function Report({ data }: { data: any }) {
-  const totalTax = useMemo(() => CATEGORY_SALES.reduce((acc, curr) => acc + curr.tax, 0), []);
+  const totalTax = 14500000;
   const totalProfit = 84200000;
 
   return (
@@ -72,16 +80,9 @@ export default function Report({ data }: { data: any }) {
           </div>
         </div>
 
-        {/* --- Top Row: Multi-Year Revenue & Profit Comparison --- */}
+        {/* --- Monthly Performance --- */}
         <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm mb-8">
-            <div className="flex justify-between items-center mb-6">
-                <h3 className="text-lg font-bold text-gray-800">Monthly Performance (2024 vs 2025)</h3>
-                <div className="flex gap-4 text-[9px] font-black text-gray-400">
-                    <span className="flex items-center gap-1"><span className="w-2 h-2 bg-blue-500 rounded-full"></span> REV '25</span>
-                    <span className="flex items-center gap-1"><span className="w-2 h-2 bg-emerald-500 rounded-full"></span> PROFIT '25</span>
-                    <span className="flex items-center gap-1"><span className="w-2 h-2 border border-emerald-300 rounded-full"></span> PROFIT '24</span>
-                </div>
-            </div>
+            <h3 className="text-lg font-bold text-gray-800 mb-6 uppercase tracking-tight italic">Performance 2024 vs 2025</h3>
             <div className="h-96 w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <ComposedChart data={MONTHLY_PERFORMANCE}>
@@ -89,7 +90,6 @@ export default function Report({ data }: { data: any }) {
                   <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{fontSize: 12, fontWeight: 700}} />
                   <YAxis axisLine={false} tickLine={false} tickFormatter={(val) => `${val}M`} />
                   <Tooltip contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px rgba(0,0,0,0.1)'}} />
-                  <Legend />
                   <Bar dataKey="rev25" name="Revenue 2025" fill={REV_25} radius={[4, 4, 0, 0]} barSize={35} />
                   <Line type="monotone" dataKey="rev24" name="Revenue 2024" stroke={REV_24} strokeWidth={2} strokeDasharray="5 5" dot={false} />
                   <Line type="monotone" dataKey="prof25" name="Profit 2025" stroke={PROFIT_25} strokeWidth={3} dot={{ r: 4 }} />
@@ -99,98 +99,144 @@ export default function Report({ data }: { data: any }) {
             </div>
         </div>
 
-        {/* --- Second Row: Category Breakdown --- */}
-        <div className="grid grid-cols-1 lg:grid-cols-1 gap-8 mb-8">
+        {/* --- Best & Worst Sellers --- */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+            <div className="bg-white p-6 rounded-2xl border border-emerald-100 shadow-sm">
+                <h3 className="text-sm font-black text-emerald-600 uppercase tracking-widest mb-4 italic">🏆 Top Sellers</h3>
+                <div className="space-y-4">
+                    {BEST_SELLERS.map((item, i) => (
+                        <div key={i} className="flex justify-between items-center p-3 bg-emerald-50/20 rounded-xl border border-emerald-50">
+                            <div>
+                                <p className="text-sm font-bold text-gray-800">{item.name}</p>
+                                <p className="text-[10px] text-emerald-600 font-bold uppercase tracking-tighter">{item.growth} Velocity</p>
+                            </div>
+                            <span className="text-sm font-black text-emerald-700">{item.units} units</span>
+                        </div>
+                    ))}
+                </div>
+            </div>
+            <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+                <h3 className="text-sm font-black text-gray-400 uppercase tracking-widest mb-4 italic">📉 Underperformers</h3>
+                <div className="space-y-4">
+                    {WORST_SELLERS.map((item, i) => (
+                        <div key={i} className="flex justify-between items-center p-3 bg-gray-50 rounded-xl border border-gray-100 opacity-60">
+                            <div>
+                                <p className="text-sm font-bold text-gray-800">{item.name}</p>
+                                <p className="text-[10px] text-red-400 font-bold uppercase tracking-tighter">{item.growth} vs Last Month</p>
+                            </div>
+                            <span className="text-sm font-black text-gray-400">{item.units} units</span>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </div>
+
+        {/* --- Category Breakdown & Stock Alerts --- */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
           <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
-            <h3 className="text-lg font-bold text-gray-800 mb-6 uppercase tracking-tight">Category Sales & Profit Breakdown</h3>
-            <div className="h-80 w-full">
+            <h3 className="text-lg font-bold text-gray-800 mb-6 uppercase tracking-tight italic">Category Contribution</h3>
+            <div className="h-64 w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={CATEGORY_SALES}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
                   <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontWeight: 700}} />
-                  <YAxis axisLine={false} tickLine={false} tickFormatter={(val) => `${val / 1000000}M`} />
-                  <Tooltip formatter={(val) => `${val.toLocaleString()} VND`} />
-                  <Legend />
-                  <Bar dataKey="sales" name="Gross Sales" fill="#6366f1" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="profit" name="Net Profit" fill="#10b981" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="tax" name="VAT Collected" fill="#fbbf24" radius={[4, 4, 0, 0]} />
+                  <YAxis axisLine={false} tickLine={false} />
+                  <Bar dataKey="sales" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="profit" fill="#10b981" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
           </div>
+          <div className="grid grid-cols-1 gap-4">
+              <div className="bg-white p-6 rounded-2xl border border-red-50 shadow-sm">
+                  <h3 className="text-[10px] font-black text-red-600 uppercase mb-4 tracking-widest italic">Inventory Shortage</h3>
+                  {LOW_STOCK_ITEMS.map((item, i) => (
+                      <div key={i} className="flex justify-between text-sm mb-2 font-bold text-gray-700 uppercase italic underline decoration-red-100">{item.name} <span>{item.stock} LEFT</span></div>
+                  ))}
+              </div>
+              <div className="bg-white p-6 rounded-2xl border border-amber-50 shadow-sm">
+                  <h3 className="text-[10px] font-black text-amber-600 uppercase mb-4 tracking-widest italic">Expiry Threshold</h3>
+                  {EXPIRING_ITEMS.map((item, i) => (
+                      <div key={i} className="flex justify-between text-sm font-bold text-gray-700">{item.name} <span className="text-amber-600 italic underline">{item.days} DAYS REMAINING</span></div>
+                  ))}
+              </div>
+          </div>
         </div>
 
-        {/* --- Third Row: Inventory & Expiry Alerts --- */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-            <div className="bg-white p-6 rounded-2xl border border-red-100 shadow-sm">
-                <div className="flex justify-between items-center mb-6">
-                    <h3 className="text-sm font-black text-red-600 uppercase tracking-widest">Low Stock Warning</h3>
-                    <span className="bg-red-50 text-red-600 text-[9px] px-2 py-1 rounded-full font-black">CRITICAL</span>
+        {/* --- AI ADVANCED ANALYTICS SECTION (RE-STYLED TO MATCH THEME) --- */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+            
+            {/* AI Retrieval: New Product Suggestions */}
+            <div className="bg-white p-8 rounded-[2.5rem] border border-blue-100 shadow-sm relative overflow-hidden">
+                <div className="flex items-center gap-3 mb-6">
+                    <div className="p-2 bg-blue-50 text-blue-600 rounded-lg text-lg">✨</div>
+                    <h3 className="text-xl font-black uppercase tracking-tighter text-blue-900">AI Inventory Retrieval</h3>
                 </div>
+                <p className="text-gray-500 text-sm mb-6 font-medium">Opportunities identified via local demand patterns:</p>
                 <div className="space-y-4">
-                    {LOW_STOCK_ITEMS.map(item => (
-                        <div key={item.name} className="flex items-center justify-between border-b border-gray-50 pb-3">
-                            <div>
-                                <p className="text-sm font-bold text-gray-800">{item.name}</p>
-                                <p className="text-[10px] font-bold text-gray-400 uppercase">{item.cat}</p>
-                            </div>
-                            <div className="text-right">
-                                <p className="text-lg font-mono font-black text-red-500">{item.stock}</p>
-                                <p className="text-[10px] text-gray-300 font-bold uppercase">Min: {item.min}</p>
-                            </div>
-                        </div>
-                    ))}
+                    <div className="bg-blue-50/50 p-5 rounded-2xl border border-blue-100">
+                        <p className="font-black text-blue-900 text-sm">1. Thai Milk Tea (RTD)</p>
+                        <p className="text-[10px] text-blue-500 font-bold uppercase mt-1 tracking-widest">Confidence: 94% • High Margin Category</p>
+                    </div>
+                    <div className="bg-blue-50/50 p-5 rounded-2xl border border-blue-100">
+                        <p className="font-black text-blue-900 text-sm">2. Low-Sugar Energy Bars</p>
+                        <p className="text-[10px] text-blue-500 font-bold uppercase mt-1 tracking-widest">Demand spike: STATIONERY (Student Hubs)</p>
+                    </div>
                 </div>
             </div>
 
-            <div className="bg-white p-6 rounded-2xl border border-amber-100 shadow-sm">
-                <div className="flex justify-between items-center mb-6">
-                    <h3 className="text-sm font-black text-amber-600 uppercase tracking-widest">Expiry Alerts</h3>
-                    <span className="bg-amber-50 text-amber-600 text-[9px] px-2 py-1 rounded-full font-black">BATCH CHECK</span>
+            {/* AI Optimizer: Stock Removal & Discount Logic */}
+            <div className="bg-white p-8 rounded-[2.5rem] border border-gray-200 shadow-sm relative overflow-hidden">
+                <div className="flex items-center gap-3 mb-6">
+                    <div className="p-2 bg-gray-100 text-gray-800 rounded-lg text-lg">🤖</div>
+                    <h3 className="text-xl font-black uppercase tracking-tighter text-gray-900">AI Stock Optimizer</h3>
                 </div>
+                <p className="text-gray-500 text-sm mb-6 font-medium">Critical efficiency actions for current inventory:</p>
                 <div className="space-y-4">
-                    {EXPIRING_ITEMS.map(item => (
-                        <div key={item.name} className="flex items-center justify-between p-4 bg-amber-50/30 rounded-xl border border-amber-100">
-                            <div>
-                                <p className="text-sm font-bold text-gray-800">{item.name}</p>
-                                <p className="text-[9px] text-amber-500 font-black uppercase">Batch: {item.batch}</p>
-                            </div>
-                            <div className="bg-white px-4 py-2 rounded-lg border border-amber-200">
-                                <span className="text-xs font-black text-amber-600 italic">{item.days}D REMAINING</span>
-                            </div>
+                    <div className="flex items-start gap-4 p-5 bg-red-50/50 border border-red-100 rounded-2xl">
+                        <div className="text-xl">⚠️</div>
+                        <div className="flex-1">
+                            <p className="font-black text-gray-900 text-sm">Fresh Milk 1L (Batch B-811)</p>
+                            <p className="text-[10px] text-red-500 font-bold uppercase tracking-tighter mt-1">Stock: 42 • Days: 2</p>
+                            <button className="mt-3 w-full py-2 bg-red-600 text-white text-[9px] font-black rounded-full uppercase tracking-widest shadow-lg shadow-red-100">
+                                Apply 40% Discount
+                            </button>
                         </div>
-                    ))}
+                    </div>
+                    <div className="flex items-start gap-4 p-5 bg-gray-50 border border-gray-100 rounded-2xl">
+                        <div className="text-xl">🗑️</div>
+                        <div className="flex-1">
+                            <p className="font-black text-gray-900 text-sm">Remove: Plastic Rulers</p>
+                            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-tighter mt-1">Velocity: Zero (60 Days)</p>
+                            <button className="mt-3 w-full py-2 bg-gray-800 text-white text-[9px] font-black rounded-full uppercase tracking-widest">
+                                Bundle with Best Sellers
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
+
         </div>
 
-        {/* --- Bottom Row: White Themed Financial Card --- */}
-        <div className="bg-white p-10 rounded-[2.5rem] border border-gray-200 shadow-xl overflow-hidden">
+        {/* --- Financial Summary Card --- */}
+        <div className="bg-white p-10 rounded-[2.5rem] border border-gray-100 shadow-2xl shadow-emerald-100/30 relative">
           <div className="flex flex-col md:flex-row items-center justify-between gap-12">
              <div className="flex-1 w-full text-center md:text-left">
-                <h3 className="text-2xl font-black text-gray-900 mb-2 tracking-tighter">FINANCIAL PERFORMANCE</h3>
-                <p className="text-gray-400 text-sm mb-8 font-medium italic">Consolidated data based on RetailCategory logic.</p>
-                
-                <div className="grid grid-cols-2 gap-6">
-                    <div className="p-6 bg-gray-50 rounded-2xl border border-gray-100">
-                        <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Total Revenue</p>
-                        <p className="text-2xl font-bold text-gray-800">180,500,000 <span className="text-xs text-gray-400">VND</span></p>
+                <h3 className="text-2xl font-black text-gray-900 tracking-tighter uppercase italic">Financial Summary</h3>
+                <div className="grid grid-cols-2 gap-6 mt-6">
+                    <div className="p-6 bg-gray-50 rounded-[1.5rem]">
+                        <p className="text-[10px] font-black text-gray-400 uppercase">Gross Revenue</p>
+                        <p className="text-2xl font-black text-gray-800">180,500,000 <span className="text-xs font-sans text-gray-400">VND</span></p>
                     </div>
-                    <div className="p-6 bg-gray-50 rounded-2xl border border-gray-100 text-right">
-                        <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Operational Cost</p>
-                        <p className="text-2xl font-bold text-red-500">96,300,000 <span className="text-xs text-gray-400">VND</span></p>
+                    <div className="p-6 bg-gray-50 rounded-[1.5rem] text-right">
+                        <p className="text-[10px] font-black text-gray-400 uppercase">Operating Cost</p>
+                        <p className="text-2xl font-black text-red-500">96,300,000 <span className="text-xs font-sans text-gray-400">VND</span></p>
                     </div>
                 </div>
              </div>
-
-             <div className="bg-gray-50 p-12 rounded-[2rem] border-8 border-white text-center md:text-right shadow-inner min-w-[340px]">
-                <p className="text-[10px] font-black text-gray-300 uppercase tracking-[0.4em] mb-4">Net Profit Balance</p>
-                <p className="text-7xl font-mono font-black tracking-tighter text-emerald-600">
-                    {totalProfit.toLocaleString()}
-                </p>
-                <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 rounded-full text-[10px] font-black text-white shadow-lg shadow-emerald-100">
-                    VND THIS QUARTER
-                </div>
+             <div className="bg-gray-50 p-12 rounded-[2.5rem] border-8 border-white text-center md:text-right shadow-inner min-w-[340px]">
+                <p className="text-[10px] font-black text-gray-300 uppercase tracking-[0.4em] mb-4">Estimated Net Profit</p>
+                <p className="text-7xl font-mono font-black tracking-tighter text-emerald-600 italic underline decoration-emerald-100">{totalProfit.toLocaleString()}</p>
+                <span className="inline-block px-5 py-2 bg-emerald-600 text-white text-[10px] font-black rounded-full mt-4 shadow-lg shadow-emerald-100">PROFITABLE GROWTH</span>
              </div>
           </div>
         </div>
