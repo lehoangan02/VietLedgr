@@ -1,3 +1,4 @@
 .DS_Store
 /src/backend/macEnv
 /src/backend/myenv
+/src/backend/node_modules

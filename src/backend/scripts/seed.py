@@ -171,43 +171,70 @@ def seed_ledger_entries(session):
 
     # Check if we already have entries to avoid duplicates
     existing = session.execute(
-        select(GeneralLedgerEntry).limit(1)
+        select(GeneralLedgerEntry).filter(GeneralLedgerEntry.store_id == store.id).limit(1)
     ).scalar_one_or_none()
     
     if existing:
+        print("Ledger already seeded. Skipping...")
         return
 
-    # Example 1: Initial Cash Injection (Owner's Equity)
-    # Debit Cash (Asset), Credit Equity
-    cash_injection = GeneralLedgerEntry(
-        store_id=store.id,
-        account_type="ASSET", # Adjust based on your actual Enum values
-        description="Initial cash investment for store opening",
-        debit_amount=Decimal("50000000.00"), # 50 million VND
-        credit_amount=Decimal("0.00"),
-    )
-    
-    # Example 2: Initial Inventory Purchase
-    # This represents the cost of the products seeded in add_products
-    inventory_setup = GeneralLedgerEntry(
-        store_id=store.id,
-        account_type="ASSET",
-        description="Opening stock value for Food and Household items",
-        debit_amount=Decimal("15000000.00"),
-        credit_amount=Decimal("0.00"),
-    )
+    entries = [
+        # --- DEBITS (Increases Assets/Expenses) ---
+        GeneralLedgerEntry(
+            store_id=store.id,
+            account_type="ASSET",
+            description="Initial cash investment for store opening",
+            debit_amount=Decimal("50000000.00"),
+            credit_amount=Decimal("0.00"),
+        ),
+        GeneralLedgerEntry(
+            store_id=store.id,
+            account_type="EXPENSE",
+            description="Monthly Store Rent - December",
+            debit_amount=Decimal("8000000.00"),
+            credit_amount=Decimal("0.00"),
+        ),
+        GeneralLedgerEntry(
+            store_id=store.id,
+            account_type="EXPENSE",
+            description="Electricity and Water Bill",
+            debit_amount=Decimal("1200000.00"),
+            credit_amount=Decimal("0.00"),
+        ),
 
-    # Example 3: Initial Utility Deposit (Expense/Asset)
-    utility_deposit = GeneralLedgerEntry(
-        store_id=store.id,
-        account_type="EXPENSE",
-        description="Electricity and Water security deposit",
-        debit_amount=Decimal("2000000.00"),
-        credit_amount=Decimal("0.00"),
-    )
+        # --- CREDITS (Increases Revenue/Liabilities or Decreases Assets) ---
+        GeneralLedgerEntry(
+            store_id=store.id,
+            account_type="REVENUE",
+            description="Daily Sales Revenue - 2025-12-17",
+            debit_amount=Decimal("0.00"),
+            credit_amount=Decimal("4500000.00"),
+        ),
+        GeneralLedgerEntry(
+            store_id=store.id,
+            account_type="REVENUE",
+            description="Daily Sales Revenue - 2025-12-18",
+            debit_amount=Decimal("0.00"),
+            credit_amount=Decimal("3850000.00"),
+        ),
+        GeneralLedgerEntry(
+            store_id=store.id,
+            account_type="ASSET", # Credit to Cash Asset (Payment out)
+            description="Payment to Rice Supplier (SKU: RICE_5KG)",
+            debit_amount=Decimal("0.00"),
+            credit_amount=Decimal("5000000.00"),
+        ),
+        GeneralLedgerEntry(
+            store_id=store.id,
+            account_type="LIABILITY",
+            description="Short-term Bank Loan for Equipment",
+            debit_amount=Decimal("0.00"),
+            credit_amount=Decimal("20000000.00"),
+        ),
+    ]
 
-    session.add_all([cash_injection, inventory_setup, utility_deposit])
-    print("Ledger seed data added.")
+    session.add_all(entries)
+    print(f"Added {len(entries)} ledger entries for store: {store.name}")
 
 
 def main():
