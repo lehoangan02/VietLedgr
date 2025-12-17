@@ -1,5 +1,5 @@
 # Re-export all models from submodules
-from .base import Base, TokenPayload, AccountType, account_type_enum
+from .base import Base, TokenPayload, AccountType, account_type_enum, RetailCategory, retail_category_enum
 from .store import Store
 from .role import Role
 from .user import User
@@ -16,6 +16,8 @@ __all__ = [
     "TokenPayload",
     "AccountType",
     "account_type_enum",
+    "RetailCategory",
+    "retail_category_enum",
     "Store",
     "Role",
     "User",

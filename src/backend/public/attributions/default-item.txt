@@ -1,0 +1,19 @@
+How to attribute?
+Creating quality icons takes a lot of time and effort. We only ask you to add a small attribution link. Choose the medium in which you are going to use the resource.
+
+Social Networks
+
+Web
+
+Printed Elements
+
+Video
+
+Apps/Games
+
+For example: websites, social media, blogs, ebooks, newsletters, etc.
+
+Copy this link and paste it wherever it's visible, close to where you’re using the resource. If that's not possible, place it at the footer of your website, blog or newsletter, or in the credits section.
+
+<a href="https://www.flaticon.com/free-icons/add-item" title="add item icons">Add item icons created by Iconjam - Flaticon</a>
+<a href="https://www.flaticon.com/free-icons/add-item" title="add item icons">Add item icons created by Iconjam - Flaticon</a>
