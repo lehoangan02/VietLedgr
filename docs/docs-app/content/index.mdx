@@ -1,0 +1,39 @@
+---
+title: VietLedgr Documentation
+description: Central hub for the VietLedgr platform architecture, backend services, and implementation guides.
+---
+
+# VietLedgr Documentation Hub
+
+Welcome to the official knowledge base for the VietLedgr project. This site captures our end-to-end architecture, engineering standards, and delivery roadmap so the whole team can build, test, and ship with confidence.
+
+> Need a quick overview? Skim the summaries below or jump straight into a guide using the sidebar.
+
+## Getting Started
+
+- Review the [Project Overview](./api-documentation) to understand our service boundaries and auth flows.
+- Walk through the [Backend Authentication Workflow](./backend-authentication-workflow) to learn how identity, tokens, and session handling are wired together.
+- Explore the [Database Implementation Plan](./database-implementation-plan) for a task-by-task breakdown of schema work, migrations, and delivery milestones.
+
+## Key Resources
+
+| Topic | Why it matters |
+| --- | --- |
+| [Database Schema](./database-schema-sql) | Authoritative SQL for provisioning PostgreSQL environments, constraints, and seed data. |
+| [Pydantic Schemas Guide](./pydantic-schemas-guide) | Validation rules, computed fields, and serialization contracts for every domain entity. |
+| [API Documentation](./api-documentation.md) | REST surface area, request/response examples, and error contracts. |
+
+## Core Principles
+
+- **Data integrity first:** Enforce constraints in both SQL and SQLAlchemy to keep inventory, ledger, and auth data consistent.
+- **Secure by default:** Apply RBAC, token expiry, and store-level access guards across the stack.
+- **Test what matters:** Aim for high coverage on CRUD, inventory, and accounting flows; automate regression checks where possible.
+- **Document continuously:** Update these pages alongside code changes so new collaborators can onboard quickly.
+
+## Contributing
+
+1. Branch from `main` or the relevant feature branch.
+2. Update docs in the same PR as your code changes when behavior shifts.
+3. Run `pnpm build` in `docs/docs-app` to ensure MDX and search indexes compile before opening a review.
+
+Found a gap or outdated section? Open an issue or drop a note in the team channel so we can keep this source of truth fresh.

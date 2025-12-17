@@ -4,7 +4,6 @@ from typing import Annotated
 import jwt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
-from jwt.exceptions import  PyJWTError 
 from pydantic import ValidationError
 from sqlalchemy.orm import Session
 
@@ -12,15 +11,16 @@ from app.core import security
 from app.core.config import settings
 from app.core.database import engine
 from app.models import TokenPayload, User
+from app.core.database import get_db
 
 reusable_oauth2 = OAuth2PasswordBearer(
     tokenUrl=f"{settings.API_STR}/auth/login"
 )
 
 
-def get_db() -> Generator[Session, None, None]:
-    with Session(engine) as session:
-        yield session
+# def get_db() -> Generator[Session, None, None]:
+#     with Session(engine) as session:
+#         yield session
 
 
 SessionDep = Annotated[Session, Depends(get_db)]
