@@ -14,6 +14,11 @@ from sqlalchemy import create_engine, select
 from sqlalchemy.orm import sessionmaker
 
 from app.models import Store, Role, TaxDetail, User
+from app.models.product import Product, ProductCategory
+from app.models.warehouse import Warehouse, Batch
+from app.models.base import RetailCategory
+
+from app.core.imageBase64Converter import ImageBase64Converter
 
 # Load environment variables
 load_dotenv()
@@ -112,6 +117,53 @@ def upsert_admin_user(session, store: Store, admin_role: Role) -> None:
     )
     session.add(user)
 
+def add_products(session):
+    store = session.execute(
+        select(Store).where(Store.name == "Main Store")
+    ).scalar_one()
+
+    converter = ImageBase64Converter()
+    image_dir = backend_dir / "public" / "images"
+
+    image_map = {
+        RetailCategory.FOOD: "healthy-food.png",
+        RetailCategory.HOUSEHOLD: "appliance.png",
+        RetailCategory.STATIONERY: "stationery.png",
+        RetailCategory.OTHERS: "default-item.png",
+    }
+
+    products = [
+        ("Rice 5kg", RetailCategory.FOOD),
+        ("Instant Noodles", RetailCategory.FOOD),
+        ("Electric Kettle", RetailCategory.HOUSEHOLD),
+        ("Notebook A5", RetailCategory.STATIONERY),
+        ("Ballpoint Pen", RetailCategory.STATIONERY),
+        ("Reusable Bag", RetailCategory.OTHERS),
+    ]
+
+    for name, retail_category in products:
+        exists = session.execute(
+            select(Product).where(Product.name == name)
+        ).scalar_one_or_none()
+
+        if exists:
+            continue
+
+        image_path = image_dir / image_map[retail_category]
+        image_base64 = converter.image_to_base64(str(image_path))
+
+        product = Product(
+            store_id=store.id,
+            name=name,
+            retail_category=retail_category,
+            image_base64=image_base64,
+            description=f"{name} description",
+            sku=name.upper().replace(" ", "_"),
+        )
+
+        session.add(product)
+
+
 
 def main():
     # Try DATABASE_URL first, then build from individual components
@@ -147,6 +199,8 @@ def main():
         upsert_tax(session, "No Tax", Decimal("0.00"), "Tax exempt items")
 
         upsert_admin_user(session, store, admin_role)
+
+        add_products(session)
 
         session.commit()
 
