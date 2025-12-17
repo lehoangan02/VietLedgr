@@ -1,7 +1,7 @@
 'use client'
 import React, { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import Sidebar from '@/components/SideBar'
+import Sidebar from '@/app/components/sidebar'
 import { ArrowLeft } from 'lucide-react'
 
 export default function AddProductPage() {

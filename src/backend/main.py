@@ -19,4 +19,6 @@ if settings.all_cors_origins:
 
 # Print all CORS origins on startup
 
+
+
 app.include_router(api_router, prefix=f"{settings.API_STR}")
