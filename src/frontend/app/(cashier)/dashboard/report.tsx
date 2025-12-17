@@ -2,173 +2,194 @@
 import React, { useMemo } from 'react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
-  PieChart, Pie, Cell, AreaChart, Area
+  LineChart, Line, ComposedChart
 } from 'recharts';
 
-// COLORS for the charts
-const COLORS = ['#3b82f6', '#10b981', '#6366f1', '#f59e0b', '#ef4444'];
+// --- Theme Colors ---
+const REV_25 = "#3b82f6"; // Primary Blue
+const REV_24 = "#94a3b8"; // Muted Gray
+const PROFIT_25 = "#10b981"; // Emerald
+const PROFIT_24 = "#6ee7b7"; // Light Emerald
 
-// --- Hardcoded Fancy Data matching your request ---
-const MOCK_LEDGER_DATA = [
-  { account_type: 'REVENUE', credit_amount: 80000000, debit_amount: 0, date: '2025-12-10' },
-  { account_type: 'EXPENSE', credit_amount: 0, debit_amount: 17000000, date: '2025-12-12' },
-  { account_type: 'ASSET', credit_amount: 0, debit_amount: 50000000, date: '2025-12-01' },
-  { account_type: 'LIABILITY', credit_amount: 15000000, debit_amount: 0, date: '2025-12-05' },
+// --- Data based on RetailCategory Enum ---
+const CATEGORY_SALES = [
+  { name: 'FOOD', sales: 80000000, tax: 8000000, profit: 25000000 },
+  { name: 'HOUSEHOLD', sales: 45000000, tax: 4500000, profit: 12000000 },
+  { name: 'STATIONERY', sales: 15000000, tax: 1500000, profit: 5000000 },
+  { name: 'OTHERS', sales: 5000000, tax: 500000, profit: 1500000 },
 ];
 
-const TREND_DATA = [
-  { day: 'Mon', revenue: 12000000, profit: 9000000 },
-  { day: 'Tue', revenue: 15000000, profit: 11000000 },
-  { day: 'Wed', revenue: 18000000, profit: 14000000 },
-  { day: 'Thu', revenue: 14000000, profit: 10000000 },
-  { day: 'Fri', revenue: 21000000, profit: 17000000 },
-  { day: 'Sat', revenue: 25000000, profit: 20000000 },
-  { day: 'Sun', revenue: 30000000, profit: 24000000 },
+// --- Comparative Data (Millions VND) ---
+const MONTHLY_PERFORMANCE = [
+  { month: 'Jan', rev24: 120, rev25: 150, prof24: 35, prof25: 45 },
+  { month: 'Feb', rev24: 130, rev25: 145, prof24: 38, prof25: 40 },
+  { month: 'Mar', rev24: 110, rev25: 160, prof24: 30, prof25: 55 },
+  { month: 'Apr', rev24: 140, rev25: 170, prof24: 42, prof25: 50 },
+  { month: 'May', rev24: 150, rev25: 190, prof24: 45, prof25: 65 },
+  { month: 'Jun', rev24: 145, rev25: 210, prof24: 40, prof25: 75 },
+  { month: 'Jul', rev24: 160, rev25: 220, prof24: 50, prof25: 80 },
+  { month: 'Aug', rev24: 170, rev25: 240, prof24: 55, prof25: 95 },
+  { month: 'Sep', rev24: 155, rev25: 200, prof24: 45, prof25: 70 },
+  { month: 'Oct', rev24: 165, rev25: 230, prof24: 48, prof25: 85 },
+  { month: 'Nov', rev24: 180, rev25: 260, prof24: 55, prof25: 100 },
+  { month: 'Dec', rev24: 200, rev25: 310, prof24: 70, prof25: 130 },
+];
+
+const LOW_STOCK_ITEMS = [
+  { name: 'Rice 5kg', stock: 5, min: 20, cat: 'FOOD' },
+  { name: 'Notebook A5', stock: 2, min: 15, cat: 'STATIONERY' },
+  { name: 'Cooking Oil', stock: 4, min: 12, cat: 'FOOD' },
+];
+
+const EXPIRING_ITEMS = [
+  { name: 'Fresh Milk 1L', days: 2, batch: 'B-811' },
+  { name: 'Greek Yogurt', days: 1, batch: 'B-902' },
 ];
 
 export default function Report({ data }: { data: any }) {
-  
-  // Use mock data if real data is empty
-  const safeData = useMemo(() => {
-    const apiItems = data?.items || (Array.isArray(data) ? data : []);
-    return apiItems.length > 0 ? apiItems : MOCK_LEDGER_DATA;
-  }, [data]);
-
-  const financialSummary = useMemo(() => {
-    const revenue = safeData
-      .filter((e: any) => e.account_type === 'REVENUE')
-      .reduce((sum: number, e: any) => sum + Number(e.credit_amount || 0), 0);
-    
-    const expenses = safeData
-      .filter((e: any) => e.account_type === 'EXPENSE')
-      .reduce((sum: number, e: any) => sum + Number(e.debit_amount || 0), 0);
-
-    return [{ name: 'Total Cash Flow', Revenue: revenue, Expenses: expenses }];
-  }, [safeData]);
-
-  const distributionData = useMemo(() => {
-    const types = ['ASSET', 'LIABILITY', 'REVENUE', 'EXPENSE'];
-    return types.map(type => {
-      const total = safeData
-        .filter((e: any) => e.account_type === type)
-        .reduce((sum: number, e: any) => sum + (Number(e.debit_amount || 0) + Number(e.credit_amount || 0)), 0);
-      return { name: type, value: total };
-    });
-  }, [safeData]);
-
-  const rev = financialSummary[0].Revenue;
-  const exp = financialSummary[0].Expenses;
-  const profitMargin = rev > 0 ? (rev / (rev + exp)) * 100 : 0;
+  const totalTax = useMemo(() => CATEGORY_SALES.reduce((acc, curr) => acc + curr.tax, 0), []);
+  const totalProfit = 84200000;
 
   return (
     <div className="min-h-screen bg-white p-8 font-sans">
       <div className="max-w-7xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight">Business Analytics</h1>
-          <p className="text-gray-500 mt-1 uppercase text-xs font-bold tracking-widest">Performance Insights</p>
-        </div>
-
-        {/* --- Top Row: Trend & Distribution --- */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
-          
-          {/* Weekly Trend */}
-          <div className="lg:col-span-2 bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
-            <h3 className="text-lg font-bold text-gray-800 mb-6">Weekly Sales Growth</h3>
-            <div className="h-80 w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={TREND_DATA}>
-                  <defs>
-                    <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.1}/>
-                      <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                  <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{fill: '#9ca3af', fontSize: 12}} />
-                  <YAxis hide />
-                  <Tooltip 
-                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}
-                  />
-                  <Area type="monotone" dataKey="revenue" stroke="#3b82f6" fillOpacity={1} fill="url(#colorRev)" strokeWidth={3} />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
+        
+        {/* --- Header Section --- */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4">
+          <div>
+            <h1 className="text-4xl font-black text-gray-900 tracking-tighter italic uppercase">Business Intelligence</h1>
+            <p className="text-gray-400 font-bold text-xs tracking-widest mt-1">CORE 811 FINANCIAL REPORTING</p>
           </div>
-
-          {/* Account Distribution */}
-          <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm text-center">
-            <h3 className="text-lg font-bold text-gray-800 mb-6">Capital Structure</h3>
-            <div className="h-80 w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={distributionData}
-                    innerRadius={70}
-                    outerRadius={95}
-                    paddingAngle={8}
-                    dataKey="value"
-                  >
-                    {distributionData.map((_, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} stroke="none" />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
+          <div className="flex gap-4">
+            <div className="bg-gray-50 border border-gray-100 p-4 rounded-2xl">
+                <p className="text-[10px] font-black text-gray-400 uppercase">Tax Liability</p>
+                <p className="text-xl font-mono font-bold text-gray-800">{totalTax.toLocaleString()} VND</p>
+            </div>
+            <div className="bg-emerald-50 border border-emerald-100 p-4 rounded-2xl">
+                <p className="text-[10px] font-black text-emerald-500 uppercase">YoY Profit Growth</p>
+                <p className="text-xl font-mono font-bold text-emerald-700">+38.2%</p>
             </div>
           </div>
         </div>
 
-        {/* --- Middle Row: Cash Flow Bar Chart --- */}
+        {/* --- Top Row: Multi-Year Revenue & Profit Comparison --- */}
         <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm mb-8">
-            <h3 className="text-lg font-bold text-gray-800 mb-6">Revenue vs Operating Expenses</h3>
-            <div className="h-64 w-full">
+            <div className="flex justify-between items-center mb-6">
+                <h3 className="text-lg font-bold text-gray-800">Monthly Performance (2024 vs 2025)</h3>
+                <div className="flex gap-4 text-[9px] font-black text-gray-400">
+                    <span className="flex items-center gap-1"><span className="w-2 h-2 bg-blue-500 rounded-full"></span> REV '25</span>
+                    <span className="flex items-center gap-1"><span className="w-2 h-2 bg-emerald-500 rounded-full"></span> PROFIT '25</span>
+                    <span className="flex items-center gap-1"><span className="w-2 h-2 border border-emerald-300 rounded-full"></span> PROFIT '24</span>
+                </div>
+            </div>
+            <div className="h-96 w-full">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={financialSummary} barGap={24}>
-                  <XAxis dataKey="name" hide />
-                  <YAxis axisLine={false} tickLine={false} tickFormatter={(val) => `${val / 1000000}M`} tick={{fill: '#9ca3af'}} />
-                  <Tooltip cursor={{fill: '#f9fafb'}} />
-                  <Bar dataKey="Revenue" fill="#10b981" radius={[8, 8, 8, 8]} barSize={80} />
-                  <Bar dataKey="Expenses" fill="#ef4444" radius={[8, 8, 8, 8]} barSize={80} />
+                <ComposedChart data={MONTHLY_PERFORMANCE}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
+                  <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{fontSize: 12, fontWeight: 700}} />
+                  <YAxis axisLine={false} tickLine={false} tickFormatter={(val) => `${val}M`} />
+                  <Tooltip contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px rgba(0,0,0,0.1)'}} />
+                  <Legend />
+                  <Bar dataKey="rev25" name="Revenue 2025" fill={REV_25} radius={[4, 4, 0, 0]} barSize={35} />
+                  <Line type="monotone" dataKey="rev24" name="Revenue 2024" stroke={REV_24} strokeWidth={2} strokeDasharray="5 5" dot={false} />
+                  <Line type="monotone" dataKey="prof25" name="Profit 2025" stroke={PROFIT_25} strokeWidth={3} dot={{ r: 4 }} />
+                  <Line type="monotone" dataKey="prof24" name="Profit 2024" stroke={PROFIT_24} strokeWidth={2} dot={{ r: 4, fill: '#fff' }} />
+                </ComposedChart>
+              </ResponsiveContainer>
+            </div>
+        </div>
+
+        {/* --- Second Row: Category Breakdown --- */}
+        <div className="grid grid-cols-1 lg:grid-cols-1 gap-8 mb-8">
+          <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
+            <h3 className="text-lg font-bold text-gray-800 mb-6 uppercase tracking-tight">Category Sales & Profit Breakdown</h3>
+            <div className="h-80 w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={CATEGORY_SALES}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
+                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontWeight: 700}} />
+                  <YAxis axisLine={false} tickLine={false} tickFormatter={(val) => `${val / 1000000}M`} />
+                  <Tooltip formatter={(val) => `${val.toLocaleString()} VND`} />
+                  <Legend />
+                  <Bar dataKey="sales" name="Gross Sales" fill="#6366f1" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="profit" name="Net Profit" fill="#10b981" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="tax" name="VAT Collected" fill="#fbbf24" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
+          </div>
         </div>
 
-        {/* --- Bottom Row: White Themed Profit Analysis --- */}
-        <div className="bg-white p-8 rounded-3xl border border-gray-200 shadow-sm overflow-hidden relative">
+        {/* --- Third Row: Inventory & Expiry Alerts --- */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+            <div className="bg-white p-6 rounded-2xl border border-red-100 shadow-sm">
+                <div className="flex justify-between items-center mb-6">
+                    <h3 className="text-sm font-black text-red-600 uppercase tracking-widest">Low Stock Warning</h3>
+                    <span className="bg-red-50 text-red-600 text-[9px] px-2 py-1 rounded-full font-black">CRITICAL</span>
+                </div>
+                <div className="space-y-4">
+                    {LOW_STOCK_ITEMS.map(item => (
+                        <div key={item.name} className="flex items-center justify-between border-b border-gray-50 pb-3">
+                            <div>
+                                <p className="text-sm font-bold text-gray-800">{item.name}</p>
+                                <p className="text-[10px] font-bold text-gray-400 uppercase">{item.cat}</p>
+                            </div>
+                            <div className="text-right">
+                                <p className="text-lg font-mono font-black text-red-500">{item.stock}</p>
+                                <p className="text-[10px] text-gray-300 font-bold uppercase">Min: {item.min}</p>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+
+            <div className="bg-white p-6 rounded-2xl border border-amber-100 shadow-sm">
+                <div className="flex justify-between items-center mb-6">
+                    <h3 className="text-sm font-black text-amber-600 uppercase tracking-widest">Expiry Alerts</h3>
+                    <span className="bg-amber-50 text-amber-600 text-[9px] px-2 py-1 rounded-full font-black">BATCH CHECK</span>
+                </div>
+                <div className="space-y-4">
+                    {EXPIRING_ITEMS.map(item => (
+                        <div key={item.name} className="flex items-center justify-between p-4 bg-amber-50/30 rounded-xl border border-amber-100">
+                            <div>
+                                <p className="text-sm font-bold text-gray-800">{item.name}</p>
+                                <p className="text-[9px] text-amber-500 font-black uppercase">Batch: {item.batch}</p>
+                            </div>
+                            <div className="bg-white px-4 py-2 rounded-lg border border-amber-200">
+                                <span className="text-xs font-black text-amber-600 italic">{item.days}D REMAINING</span>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </div>
+
+        {/* --- Bottom Row: White Themed Financial Card --- */}
+        <div className="bg-white p-10 rounded-[2.5rem] border border-gray-200 shadow-xl overflow-hidden">
           <div className="flex flex-col md:flex-row items-center justify-between gap-12">
-             <div className="flex-1 w-full">
-                <div className="flex items-center gap-2 mb-2">
-                    <span className="h-2 w-2 bg-emerald-500 rounded-full animate-pulse"></span>
-                    <h3 className="text-xl font-bold text-gray-900">Net Profit Margin</h3>
-                </div>
-                <p className="text-gray-500 text-sm mb-6 font-medium">Percentage of total turnover retained as profit.</p>
-                <div className="h-4 bg-gray-100 rounded-full overflow-hidden border border-gray-50">
-                    <div 
-                        className="h-full bg-gradient-to-r from-blue-500 to-emerald-400 transition-all duration-1000 ease-out shadow-inner" 
-                        style={{ width: `${profitMargin}%` }}
-                    ></div>
-                </div>
-                <div className="flex justify-between mt-4 text-xs font-black uppercase tracking-widest">
-                    <div className="flex flex-col">
-                        <span className="text-gray-400 mb-1">Total Revenue</span>
-                        <span className="text-emerald-600 text-lg">{rev.toLocaleString()} <span className="text-[10px] font-sans">VND</span></span>
+             <div className="flex-1 w-full text-center md:text-left">
+                <h3 className="text-2xl font-black text-gray-900 mb-2 tracking-tighter">FINANCIAL PERFORMANCE</h3>
+                <p className="text-gray-400 text-sm mb-8 font-medium italic">Consolidated data based on RetailCategory logic.</p>
+                
+                <div className="grid grid-cols-2 gap-6">
+                    <div className="p-6 bg-gray-50 rounded-2xl border border-gray-100">
+                        <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Total Revenue</p>
+                        <p className="text-2xl font-bold text-gray-800">180,500,000 <span className="text-xs text-gray-400">VND</span></p>
                     </div>
-                    <div className="flex flex-col text-right">
-                        <span className="text-gray-400 mb-1">Total Expenses</span>
-                        <span className="text-red-500 text-lg">{exp.toLocaleString()} <span className="text-[10px] font-sans">VND</span></span>
+                    <div className="p-6 bg-gray-50 rounded-2xl border border-gray-100 text-right">
+                        <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Operational Cost</p>
+                        <p className="text-2xl font-bold text-red-500">96,300,000 <span className="text-xs text-gray-400">VND</span></p>
                     </div>
                 </div>
              </div>
 
-             <div className="bg-gray-50 p-10 rounded-2xl border border-gray-100 text-center md:text-right min-w-[300px]">
-                <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Estimated Net Profit</p>
-                <p className={`text-6xl font-mono font-black tracking-tighter ${rev - exp >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
-                    {(rev - exp).toLocaleString()}
+             <div className="bg-gray-50 p-12 rounded-[2rem] border-8 border-white text-center md:text-right shadow-inner min-w-[340px]">
+                <p className="text-[10px] font-black text-gray-300 uppercase tracking-[0.4em] mb-4">Net Profit Balance</p>
+                <p className="text-7xl font-mono font-black tracking-tighter text-emerald-600">
+                    {totalProfit.toLocaleString()}
                 </p>
-                <div className="mt-4 inline-flex items-center gap-2 px-3 py-1 bg-white border border-gray-200 rounded-full text-[10px] font-bold text-gray-500 uppercase">
-                    VND Current Period
+                <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 rounded-full text-[10px] font-black text-white shadow-lg shadow-emerald-100">
+                    VND THIS QUARTER
                 </div>
              </div>
           </div>
