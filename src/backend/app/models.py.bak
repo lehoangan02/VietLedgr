@@ -234,7 +234,7 @@ class Product(Base):
     )
 
     name: Mapped[str] = mapped_column(String(255), nullable=False)
-    retail_category: Mapped[RetailCategory] = mapped_column(String(50), nullable=False)
+    retail_category: Mapped[RetailCategory] = mapped_column(retail_category_enum, nullable=False)
     image_base64: Mapped[str | None] = mapped_column(Text, nullable=False)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     sku: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
