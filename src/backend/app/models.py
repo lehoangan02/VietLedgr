@@ -38,12 +38,6 @@ class AccountType(str, Enum):
     REVENUE = "REVENUE"
     EXPENSE = "EXPENSE"
 
-class RetailCategory(str, Enum):
-    FOOD = "FOOD"
-    HOUSEHOLD = "HOUSEHOLD"
-    STAIONERY = "STATIONERY"
-    OTHERS = "OTHERS"
-
 
 # ============================================================================
 # PYDANTIC MODELS (for JWT, etc.)
@@ -228,11 +222,6 @@ class Product(Base):
         ForeignKey("product_categories.category_id", ondelete="SET NULL"), nullable=True
     )
     name: Mapped[str] = mapped_column(String(255), nullable=False)
-
-    retail_category: Mapped[RetailCategory] = mapped_column(String(50), nullable=False)
-
-    image_base64: Mapped[str | None] = mapped_column(Text, nullable=False)
-
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     sku: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
     created_at: Mapped[datetime] = mapped_column(
@@ -498,4 +487,4 @@ class GeneralLedgerEntry(Base):
     )
 
     def __repr__(self) -> str:
-        return f"<GeneralLedgerEntry(entry_id={self.entry_id}, type={self.account_type}, debit={self.debit_amount}, credit={self.credit_amount})>" 
+        return f"<GeneralLedgerEntry(entry_id={self.entry_id}, type={self.account_type}, debit={self.debit_amount}, credit={self.credit_amount})>"

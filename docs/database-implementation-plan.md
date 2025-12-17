@@ -904,7 +904,7 @@ Before implementation:
 - [ ] Accounting entries balanced
 - [ ] Tests passing (>80% coverage)
 - [ ] API documentation complete
-- [ ] Performance acceptable (under 200 ms response)
+- [ ] Performance acceptable (<200ms response)
 
 ---
 
