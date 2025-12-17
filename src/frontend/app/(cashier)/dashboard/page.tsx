@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import Inventory from "./inventory";
+import Ledger from "./ledger";
 import Image from "next/image";
 
 export default function DashboardPage() {
@@ -44,8 +45,7 @@ export default function DashboardPage() {
         )}
         {activeView === 'ledger' && (
         <div>
-          <h1 className="text-3xl font-bold">Ledger Content</h1>
-          <p className="mt-4">This is the ledger content area.</p>
+          <Ledger />
         </div>
         )}
         {activeView === 'report' && (

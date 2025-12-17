@@ -17,6 +17,8 @@ from app.models import Store, Role, TaxDetail, User
 from app.models.product import Product, ProductCategory
 from app.models.warehouse import Warehouse, Batch
 from app.models.base import RetailCategory
+from app.models.base import AccountType
+from app.models.ledger import GeneralLedgerEntry
 
 from app.core.imageBase64Converter import ImageBase64Converter
 
@@ -162,7 +164,50 @@ def add_products(session):
         )
 
         session.add(product)
+def seed_ledger_entries(session):
+    store = session.execute(
+        select(Store).where(Store.name == "Main Store")
+    ).scalar_one()
 
+    # Check if we already have entries to avoid duplicates
+    existing = session.execute(
+        select(GeneralLedgerEntry).limit(1)
+    ).scalar_one_or_none()
+    
+    if existing:
+        return
+
+    # Example 1: Initial Cash Injection (Owner's Equity)
+    # Debit Cash (Asset), Credit Equity
+    cash_injection = GeneralLedgerEntry(
+        store_id=store.id,
+        account_type="ASSET", # Adjust based on your actual Enum values
+        description="Initial cash investment for store opening",
+        debit_amount=Decimal("50000000.00"), # 50 million VND
+        credit_amount=Decimal("0.00"),
+    )
+    
+    # Example 2: Initial Inventory Purchase
+    # This represents the cost of the products seeded in add_products
+    inventory_setup = GeneralLedgerEntry(
+        store_id=store.id,
+        account_type="ASSET",
+        description="Opening stock value for Food and Household items",
+        debit_amount=Decimal("15000000.00"),
+        credit_amount=Decimal("0.00"),
+    )
+
+    # Example 3: Initial Utility Deposit (Expense/Asset)
+    utility_deposit = GeneralLedgerEntry(
+        store_id=store.id,
+        account_type="EXPENSE",
+        description="Electricity and Water security deposit",
+        debit_amount=Decimal("2000000.00"),
+        credit_amount=Decimal("0.00"),
+    )
+
+    session.add_all([cash_injection, inventory_setup, utility_deposit])
+    print("Ledger seed data added.")
 
 
 def main():
@@ -201,6 +246,7 @@ def main():
         upsert_admin_user(session, store, admin_role)
 
         add_products(session)
+        seed_ledger_entries(session)
 
         session.commit()
 
