@@ -4,7 +4,7 @@ from sqlalchemy import UUID, TIMESTAMP, ForeignKey, Index, String, Text, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from typing import TYPE_CHECKING
 
-from .base import Base
+from .base import Base, RetailCategory, retail_category_enum
 
 if TYPE_CHECKING:
     from .store import Store
@@ -58,6 +58,8 @@ class Product(Base):
     )
 
     name: Mapped[str] = mapped_column(String(255), nullable=False)
+    retail_category: Mapped[RetailCategory] = mapped_column(retail_category_enum, nullable=False)
+    image_base64: Mapped[str | None] = mapped_column(Text, nullable=True)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     sku: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
 

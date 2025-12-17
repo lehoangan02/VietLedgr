@@ -25,10 +25,21 @@ class AccountType(str, Enum):
     REVENUE = "REVENUE"
     EXPENSE = "EXPENSE"
 
+class RetailCategory(str, Enum):
+    FOOD = "FOOD"
+    HOUSEHOLD = "HOUSEHOLD"
+    STATIONERY = "STATIONERY"
+    OTHERS = "OTHERS"
 
-# IMPORTANT: Enum type đã được tạo bởi migration/SQL script => create_type=False
+# IMPORTANT: Enum type is created by migration/SQL script => create_type=False
 account_type_enum = PGEnum(
     AccountType,
     name="account_type",
+    create_type=False,
+)
+
+retail_category_enum = PGEnum(
+    RetailCategory,
+    name="retailcategory",
     create_type=False,
 )
