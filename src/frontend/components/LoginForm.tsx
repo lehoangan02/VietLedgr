@@ -2,7 +2,7 @@
 import React, { useState } from 'react'
 import { Facebook, Github, Eye, EyeOff } from 'lucide-react'
 import { GoogleIcon } from '@/components/GoogleIcon'
-import { useRouter } from 'next/navigation'
+import { redirect, useRouter } from 'next/navigation'
 import { postLogin } from '@/lib/fast-api/auth'
 
 export default function LoginForm() {
@@ -88,7 +88,7 @@ export default function LoginForm() {
          <p className="text-sm text-gray-500 mt-4">New on our platform? {' '}
             <button
                type="button"
-               onClick={() => router.push('/?mode=register')}
+               onClick={() => redirect('/register')}
                className="text-orange-500 hover:underline">
                Create an account
             </button>
