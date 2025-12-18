@@ -95,7 +95,7 @@ export default function LoginForm() {
          <p className="text-sm text-gray-500 mt-4">New on our platform? {' '}
             <button
                type="button"
-               onClick={() => router.push('/?mode=register')}
+               onClick={() => router.push('/register')}
                className="text-orange-500 hover:underline">
                Create an account
             </button>
