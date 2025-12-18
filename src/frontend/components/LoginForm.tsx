@@ -2,6 +2,7 @@
 import React, { useState } from 'react'
 import { Eye, EyeOff } from 'lucide-react'
 import { useRouter } from 'next/navigation'
+import { postLogin } from '@/lib/fast-api/auth'
 
 export default function LoginForm() {
    const [username, setUsername] = useState('admin')
@@ -15,39 +16,19 @@ export default function LoginForm() {
    async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
       e.preventDefault()
       setError(null)
-      setLoading(true)
 
-      // FastAPI OAuth2 uses x-www-form-urlencoded
-      const formData = new URLSearchParams();
-      formData.append('username', username);
-      formData.append('password', password);
+      const formData = new FormData(e.currentTarget);
 
       try {
-         const response = await fetch('http://localhost:8000/api/auth/login', {
-            method: 'POST',
-            headers: {
-               'Content-Type': 'application/x-www-form-urlencoded',
-            },
-            body: formData,
-         });
-
-         const data = await response.json();
-
-         if (response.ok) {
-            // Save the token for other pages
-            // localStorage.setItem('token', data.access_token);
-            // localStorage.removeItem('token');
-            document.cookie = `token=${data.access_token}; path=/;`;
-            setError(null);
-            router.refresh();
-            router.push('/dashboard');
-         } else {
-            setError(data.detail || 'Login failed. Check your credentials.');
-         }
-      } catch (err) {
-         setError('Cannot connect to the backend server.');
-      } finally {
+         setLoading(true);
+         await postLogin(formData);
+         setError(null);
          setLoading(false);
+         router.refresh();
+         
+      } catch (err) {
+         const message = err instanceof Error ? err.message : String(err);
+         setError(message || "Login failed");
       }
    }
 

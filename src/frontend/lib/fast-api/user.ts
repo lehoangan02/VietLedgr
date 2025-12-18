@@ -1,15 +1,13 @@
 import { cookies } from "next/headers";
 
-export type Role = "CASHIER" | "MANAGER" | "ADMIN";
-
 export type CurrentUser = {
     id: string;
     username: string;
-    role: Role;
+    role_id: string;
+    role: string;
 } | null;
 
-const FASTAPI_URL = process.env.FASTAPI_URL!; 
-
+const FASTAPI_URL = process.env.FASTAPI_URL!;
 export async function getCurrentUser(): Promise<CurrentUser> {
     const cookieStore = await cookies();
     const accessToken = cookieStore.get("access_token")?.value;
@@ -19,7 +17,7 @@ export async function getCurrentUser(): Promise<CurrentUser> {
     const res = await fetch(`${FASTAPI_URL}/api/user/me`, {
         method: "GET",
         headers: {
-        Authorization: `Bearer ${accessToken}`,
+            Authorization: `Bearer ${accessToken}`,
         },
         cache: "no-store",
     });
@@ -29,12 +27,14 @@ export async function getCurrentUser(): Promise<CurrentUser> {
     const data = (await res.json()) as {
         user_id: string;
         username: string;
-        type: Role; 
+        role_id: string;
+        role_name: string; 
     };
 
     return {
         id: data.user_id,
         username: data.username,
-        role: data.type,
+        role_id: data.role_id,
+        role: data.role_name,
     };
 }
