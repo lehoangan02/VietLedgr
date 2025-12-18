@@ -4,7 +4,8 @@ import { ReactNode } from "react";
 
 export default async function AdminLayout({ children }: { children: ReactNode}) {
     const user = await getCurrentUser();
-    if(!user || user.role !== "ADMIN") {
+    const role = user?.role.toString().toLowerCase();
+    if(!user || role !== "admin") {
         redirect("/unauthorized");
     }
 

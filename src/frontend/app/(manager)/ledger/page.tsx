@@ -1,6 +1,8 @@
 'use client';
 import React, { useState, useMemo, useEffect } from 'react';
 import Sidebar from '@/components/SideBar';
+import { getLedgerEntries } from '@/lib/fast-api/ledger';
+import { getStoreCurrentUser } from '@/lib/fast-api/userStoreId';
 
 // --- Icons ---
 const FilterIcon = ({ className }: { className: string }) => (
@@ -19,15 +21,6 @@ interface LedgerEntry {
    entry_date: string;
 }
 
-// Helper to get token from cookies
-function getTokenFromCookie(name = 'token') {
-   if (typeof document === 'undefined') return null;
-   const value = `; ${document.cookie}`;
-   const parts = value.split(`; ${name}=`);
-   if (parts.length === 2) return parts.pop()!.split(';').shift() || null;
-   return null;
-}
-
 export default function LedgerPage() {
    const [entries, setEntries] = useState<LedgerEntry[]>([]);
    const [filterType, setFilterType] = useState<string>('');
@@ -38,44 +31,26 @@ export default function LedgerPage() {
       setLoading(true);
       setError('');
       try {
-         const token = getTokenFromCookie('token');
-         if (!token) {
-            setError('No authentication token found. Please log in.');
-            return;
+         const store_id = await getStoreCurrentUser();
+         if (!store_id) {
+            throw new Error("Cannot get store id");
          }
 
-         // Get user info to get store_id
-         const userRes = await fetch('http://localhost:8000/api/user/me', {
-            headers: { 'Authorization': `Bearer ${token}` }
-         });
-         const userData = await userRes.json();
-         const storeId = userData.store_id || userData.id;
-
-         const HARDCODED_STORE_ID = "d955be01-fde5-4b26-bf99-fef4454627ac";
-
-         // 2. Fetch Ledger using valid UUID from your DB
          const params = new URLSearchParams({
-            store_id: HARDCODED_STORE_ID,
+            store_id: store_id,
             page: "1",
             page_size: "100"
          });
          if (filterType) params.append('account_type', filterType);
-
-         const ledgerRes = await fetch(`http://localhost:8000/api/ledger/entries?${params.toString()}`, {
-            headers: {
-               'Authorization': `Bearer ${token}`,
-               'Content-Type': 'application/json'
-            }
-         });
-
-         const data = await ledgerRes.json();
-         if (!ledgerRes.ok) {
-            if (ledgerRes.status === 403) throw new Error("Permission Denied: User not linked to Store " + storeId);
-            throw new Error(data.detail || 'Failed to fetch ledger');
+         const filterParams = params.toString();
+         const ledgerItems = await getLedgerEntries(filterParams);
+         if(!ledgerItems) {
+            throw new Error("Cannot get ledger items");
          }
-         setEntries(data.items || []);
-      } catch (err: any) {
-         setError(err.message);
+         setEntries(ledgerItems);
+      } catch (err: unknown) {
+         const message = err instanceof Error ? err.message : String(err);
+         setError(message);
          console.error("Ledger Fetch Error:", err);
       } finally {
          setLoading(false);
