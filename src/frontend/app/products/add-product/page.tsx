@@ -1,8 +1,9 @@
 'use client'
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Sidebar from '@/components/SideBar'
 import { ArrowLeft } from 'lucide-react'
+import { v4 as uuidv4 } from 'uuid'
 
 export default function AddProductPage() {
    const router = useRouter()
@@ -23,6 +24,13 @@ export default function AddProductPage() {
    const [quantityAlert, setQuantityAlert] = useState<number | ''>('')
    const fileInputRef = React.useRef<HTMLInputElement>(null)
 
+   const [warehousesList, setWarehousesList] = useState<{ warehouse_id: string, name: string }[]>([]);
+   useEffect(() => {
+      fetch('http://localhost:8000/api/warehouses/')
+         .then(res => res.json())
+         .then(data => setWarehousesList(Array.isArray(data) ? data : (data.items ?? [])));
+   }, []);
+
    function generateSku() {
       const code = 'PT' + Math.floor(1000 + Math.random() * 9000)
       setSku(code)
@@ -42,26 +50,67 @@ export default function AddProductPage() {
       router.push('/products')
    }
 
-   function onSubmit(e: React.FormEvent) {
+   function toBase64(file: File): Promise<string> {
+      return new Promise((resolve, reject) => {
+         const reader = new FileReader();
+         reader.readAsDataURL(file);
+         reader.onload = () => resolve(reader.result as string);
+         reader.onerror = error => reject(error);
+      });
+   }
+
+   async function onSubmit(e: React.FormEvent) {
       e.preventDefault()
-      // TODO: call API to create product -> for now just navigate back
-      console.log({
-         store,
-         warehouse,
-         name,
-         category,
-         sku,
-         description,
-         images,
-         productType,
-         quantity,
-         price,
-         taxType,
-         discountType,
-         discountValue,
-         quantityAlert,
-      })
-      router.push('/products')
+      // 1. Prepare product payload
+      const productPayload = {
+         name: name,
+         retail_category: category,
+         sku: sku,
+         description: description,
+         image_base64: images[0] ? await toBase64(images[0]) : undefined,
+         // need to change this part to map correct category and store IDs
+         category_id: 'df3bdfbf-1553-4f6c-a7a0-a3c7e0ccec2d',
+         store_id: 'd955be01-fde5-4b26-bf99-fef4454627ac',
+      }
+
+      try {
+         // 2. Create product first
+         const productRes = await fetch('http://localhost:8000/api/products/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(productPayload)
+         })
+         if (!productRes.ok) throw new Error('Failed to add product')
+         const productData = await productRes.json()
+         const productId = productData.product_id
+
+         // 3. Prepare batch payload using the real product_id
+         const batchPayload = {
+            product_id: productId,
+            warehouse_id: warehouse,
+            stock: quantity || 0,
+            cost: price || 0,
+            sale_price: price || 0,
+            import_date: new Date().toISOString(),
+            expire_date: null,
+            supplier_name: "Group 1"
+         }
+
+         // 4. Create batch
+         const batchRes = await fetch('http://localhost:8000/api/batches/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(batchPayload)
+         })
+         if (!batchRes.ok) throw new Error('Failed to add batch')
+
+         alert('Product and batch added!')
+         router.push('/products')
+      } catch (err) {
+         alert('Error: ' + (err as Error).message)
+      }
+
+      // router.push('/products')
    }
 
    return (
@@ -79,7 +128,6 @@ export default function AddProductPage() {
                         <ArrowLeft size={14} /> Back to Products
                      </button>
                      <h1 className="text-xl font-semibold mt-3">Create Product</h1>
-                     <div className="text-sm text-gray-500">Dashboard › Create Product</div>
                   </div>
                </div>
 
@@ -96,8 +144,8 @@ export default function AddProductPage() {
                            <label className="text-sm text-gray-700">Store *</label>
                            <select value={store} onChange={(e) => setStore(e.target.value)} className="w-full mt-1 border rounded px-3 py-2">
                               <option value="">Select</option>
-                              <option value="main">Main Store</option>
-                              <option value="online">Online Store</option>
+                              <option value="wh1">Store 1</option>
+                              <option value="wh2">Store 2</option>
                            </select>
                         </div>
 
@@ -105,8 +153,7 @@ export default function AddProductPage() {
                            <label className="text-sm text-gray-700">Warehouse *</label>
                            <select value={warehouse} onChange={(e) => setWarehouse(e.target.value)} className="w-full mt-1 border rounded px-3 py-2">
                               <option value="">Select</option>
-                              <option value="wh1">Warehouse 1</option>
-                              <option value="wh2">Warehouse 2</option>
+                              {warehousesList.map(w => <option key={w.warehouse_id} value={w.warehouse_id}>{w.name}</option>)}
                            </select>
                         </div>
 
