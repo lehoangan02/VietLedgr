@@ -65,7 +65,7 @@ export default function AddProductPage() {
    }
 
    return (
-      <div className="w-full max-w-7xl mx-auto flex gap-6">
+      <div className="w-full max-w-screen-2xl mx-auto flex gap-6">
          <Sidebar />
 
          <main className="flex-1">
