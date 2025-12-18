@@ -1,32 +1,51 @@
 'use client'
 import React, { useState } from 'react'
-import { Facebook, Github, Eye, EyeOff } from 'lucide-react'
-import { GoogleIcon } from '@/components/GoogleIcon'
+import { Eye, EyeOff } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { postLogin } from '@/lib/fast-api/auth'
 
 export default function LoginForm() {
-   const [username, setUsername] = useState('')
-   const [password, setPassword] = useState('')
+   const [username, setUsername] = useState('admin')
+   const [password, setPassword] = useState('admin123')
    const [remember, setRemember] = useState(true)
    const [showPassword, setShowPassword] = useState(false)
    const [error, setError] = useState<string | null>(null)
+   const [loading, setLoading] = useState(false)
    const router = useRouter()
 
    async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
       e.preventDefault()
       setError(null)
+      setLoading(true)
 
-      const formData = new FormData(e.currentTarget);
+      // FastAPI OAuth2 uses x-www-form-urlencoded
+      const formData = new URLSearchParams();
+      formData.append('username', username);
+      formData.append('password', password);
 
       try {
-         await postLogin(formData);
-         setError(null);
-         router.refresh();
-         
+         const response = await fetch('http://localhost:8000/api/auth/login', {
+            method: 'POST',
+            headers: {
+               'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: formData,
+         });
+
+         const data = await response.json();
+
+         if (response.ok) {
+            // Save the token for other pages
+            localStorage.setItem('token', data.access_token);
+            setError(null);
+            router.refresh();
+            router.push('/dashboard');
+         } else {
+            setError(data.detail || 'Login failed. Check your credentials.');
+         }
       } catch (err) {
-         const message = err instanceof Error ? err.message : String(err);
-         setError(message || "Login failed");
+         setError('Cannot connect to the backend server.');
+      } finally {
+         setLoading(false);
       }
    }
 
@@ -82,66 +101,14 @@ export default function LoginForm() {
 
             {error && <div className="text-sm text-red-600">{error}</div>}
 
-            <button type="submit" className="w-full bg-orange-400 text-white py-2 rounded-md">Sign In</button>
+            <button
+               type="submit"
+               className="w-full bg-orange-400 text-white py-2 rounded-md"
+               disabled={loading}
+            >
+               {loading ? 'Authenticating...' : 'Sign In'}
+            </button>
          </form>
-
-         <p className="text-sm text-gray-500 mt-4">New on our platform? {' '}
-            <button
-               type="button"
-               onClick={() => router.push('/?mode=register')}
-               className="text-orange-500 hover:underline">
-               Create an account
-            </button>
-         </p>
-
-         <div className="text-center my-4 text-gray-300">— OR —</div>
-
-         <div className="flex gap-3">
-            <button
-               type="button"
-               aria-label="Continue with Facebook"
-               className="flex-1 flex items-center justify-center gap-2 bg-blue-600 text-white py-2 rounded-md"
-            >
-               <Facebook size={18} />
-               <span className="sr-only">Facebook</span>
-            </button>
-
-            <button
-               type="button"
-               aria-label="Continue with Google"
-               className="flex-1 flex items-center justify-center gap-2 bg-white border rounded-md"
-            >
-               <GoogleIcon />
-               <span className="sr-only">Google</span>
-            </button>
-
-            <button
-               type="button"
-               aria-label="Continue with GitHub"
-               className="flex-1 flex items-center justify-center gap-2 bg-slate-800 text-white rounded-md"
-            >
-               <Github size={18} />
-               <span className="sr-only">GitHub</span>
-            </button>
-         </div>
-
-         <div className="mt-4">
-            <CloseTabButton />
-         </div>
       </div>
-   )
-}
-
-function CloseTabButton() {
-   const handleClose = () => {
-      try { window.close() } catch { /* ignore */ }
-   }
-   return (
-      <button
-         onClick={handleClose}
-         className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
-      >
-         Close Tab
-      </button>
    )
 }

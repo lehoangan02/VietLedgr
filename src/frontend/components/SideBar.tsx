@@ -1,35 +1,72 @@
 'use client'
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { ChevronDown, ChevronRight } from 'lucide-react'
-import { useRouter } from 'next/navigation' // added import
+import { useRouter, usePathname } from 'next/navigation'
 
 export default function Sidebar() {
-   const router = useRouter() // added router
+   const router = useRouter()
+   const pathname = usePathname()
 
    const sections = [
-      { title: 'Main', items: ['Dashboard Report', 'Super Admin'] },
-      { title: 'Inventory', items: ['Products', 'Expired Products', 'Low Stocks', 'Category & Brands', 'Print Barcode / QR Code'] },
-      { title: 'Stock', items: ['Manage Stock', 'Stock Transfer'] },
-      { title: 'Purchases', items: ['Purchase Orders', 'Purchase Returns'] },
-      { title: 'Finance & Accounts', items: ['Expense', 'Income', 'Account Statement'] },
-      { title: 'Customers & Suppliers', items: ['Customers', 'Suppliers', 'Stores', 'Warehouses'] },
-      { title: 'Settings', items: [] },
+      { title: 'Main', items: ['Dashboard Report', 'Manage Staffs'] },
+      { title: 'Inventory', items: ['Products', 'Category & Brands'] },
+      { title: 'Stock & Purchases', items: ['Manage Stock', 'Stock Transfer', 'Purchase Orders', 'Purchase Returns'] },
+      { title: 'Sales', items: ['Sales Management'] },
+      { title: 'Ledger', items: ['General Ledger', 'Trial Balance', 'Balance Sheet', 'Expenses'] },
+      { title: 'Locations', items: ['Stores', 'Warehouses'] },
+      { title: 'Partners', items: ['Customers', 'Suppliers'] },
+      { title: 'Settings', items: ['Advanced'] },
    ]
 
-   const [open, setOpen] = useState<Record<string, boolean>>(() =>
-      Object.fromEntries(sections.map((s) => [s.title, s.title === 'Inventory'])) // default open Inventory
-   )
-
-   // map specific item names to routes
    const routeMap: Record<string, string> = {
-      Customers: '/customers',
-      Suppliers: '/suppliers',
-      Stores: '/stores',
-      Warehouses: '/warehouses',
+      'Dashboard Report': '/dashboard',
+      'Manage Staffs': '/staff-manage',
+      'Products': '/products',
+      'Category & Brands': '/brands',
+      'Manage Stock': '/stock-manage',
+      'Stock Transfer': '/stock-transfer',
+      'Purchase Orders': '/purchase-orders',
+      'Purchase Returns': '/purchase-returns',
+      'Sales Management': '/sales',
+      'Stores': '/stores',
+      'Warehouses': '/warehouses',
+      'Customers': '/customers',
+      'Suppliers': '/suppliers',
+      'Advanced': '/settings',
+      'General Ledger': '/ledger',
    }
 
+   // Find the section that contains the current route
+   function getSectionWithActiveRoute() {
+      for (const s of sections) {
+         for (const it of s.items) {
+            const route = routeMap[it]
+            if (route && pathname.startsWith(route)) {
+               return s.title
+            }
+         }
+      }
+      // Default to Inventory if nothing matches
+      return 'Inventory'
+   }
+
+   const [open, setOpen] = useState<Record<string, boolean>>(() =>
+      Object.fromEntries(sections.map((s) => [s.title, false]))
+   )
+
+   // Open the section with the active route on mount or when pathname changes
+   useEffect(() => {
+      const activeSection = getSectionWithActiveRoute()
+      setOpen(prev =>
+         Object.fromEntries(sections.map((s) => [s.title, s.title === activeSection]))
+      )
+   }, [pathname])
+
    function toggle(title: string) {
-      setOpen((prev) => ({ ...prev, [title]: !prev[title] }))
+      setOpen(prev => ({
+         ...prev,
+         [title]: !prev[title]
+      }))
    }
 
    return (
@@ -43,7 +80,10 @@ export default function Sidebar() {
                   <div key={s.title} className="mb-4">
                      <button
                         type="button"
-                        onClick={() => toggle(s.title)}
+                        onClick={e => {
+                           e.stopPropagation()
+                           toggle(s.title)
+                        }}
                         className="w-full flex items-center justify-between px-2 py-1 rounded-md hover:bg-orange-50 focus:outline-none"
                         aria-expanded={isOpen}
                         aria-controls={`section-${s.title}`}
@@ -64,23 +104,29 @@ export default function Sidebar() {
                            {s.items.length === 0 && (
                               <li className="text-sm text-gray-400 px-3 py-2">No items</li>
                            )}
-                           {s.items.map((it) => (
-                              <li
-                                 key={it}
-                                 // navigate when the item has a mapped route
-                                 onClick={() => routeMap[it] && router.push(routeMap[it])}
-                                 onKeyDown={(e) => {
-                                    if ((e.key === 'Enter' || e.key === ' ') && routeMap[it]) {
-                                       router.push(routeMap[it])
-                                    }
-                                 }}
-                                 role={routeMap[it] ? 'button' : undefined}
-                                 tabIndex={routeMap[it] ? 0 : undefined}
-                                 className={`flex items-center text-sm px-3 py-2 rounded-md hover:bg-orange-50 ${it === 'Products' ? 'bg-orange-50 font-medium text-orange-600' : 'text-gray-700'} cursor-pointer`}
-                              >
-                                 <span className="flex-1">{it}</span>
-                              </li>
-                           ))}
+                           {s.items.map((it) => {
+                              const route = routeMap[it]
+                              const isActive = route && pathname.startsWith(route)
+                              return (
+                                 <li
+                                    key={it}
+                                    onClick={() => route && router.push(route)}
+                                    onKeyDown={(e) => {
+                                       if ((e.key === 'Enter' || e.key === ' ') && route) {
+                                          router.push(route)
+                                       }
+                                    }}
+                                    role={route ? 'button' : undefined}
+                                    tabIndex={route ? 0 : undefined}
+                                    className={`flex items-center text-sm px-3 py-2 rounded-md hover:bg-orange-50 ${isActive
+                                       ? 'bg-orange-50 font-medium text-orange-600'
+                                       : 'text-gray-700'
+                                       } cursor-pointer`}
+                                 >
+                                    <span className="flex-1">{it}</span>
+                                 </li>
+                              )
+                           })}
                         </ul>
                      </div>
                   </div>
