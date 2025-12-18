@@ -19,6 +19,15 @@ interface LedgerEntry {
    entry_date: string;
 }
 
+// Helper to get token from cookies
+function getTokenFromCookie(name = 'token') {
+   if (typeof document === 'undefined') return null;
+   const value = `; ${document.cookie}`;
+   const parts = value.split(`; ${name}=`);
+   if (parts.length === 2) return parts.pop()!.split(';').shift() || null;
+   return null;
+}
+
 export default function LedgerPage() {
    const [entries, setEntries] = useState<LedgerEntry[]>([]);
    const [filterType, setFilterType] = useState<string>('');
@@ -29,11 +38,11 @@ export default function LedgerPage() {
       setLoading(true);
       setError('');
       try {
-         const token = localStorage.getItem('token');
-         // if (!token) {
-         //    setError('No authentication token found. Please log in.');
-         //    return;
-         // }
+         const token = getTokenFromCookie('token');
+         if (!token) {
+            setError('No authentication token found. Please log in.');
+            return;
+         }
 
          // Get user info to get store_id
          const userRes = await fetch('http://localhost:8000/api/user/me', {

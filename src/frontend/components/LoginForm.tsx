@@ -35,7 +35,9 @@ export default function LoginForm() {
 
          if (response.ok) {
             // Save the token for other pages
-            localStorage.setItem('token', data.access_token);
+            // localStorage.setItem('token', data.access_token);
+            // localStorage.removeItem('token');
+            document.cookie = `token=${data.access_token}; path=/;`;
             setError(null);
             router.refresh();
             router.push('/dashboard');
@@ -109,6 +111,14 @@ export default function LoginForm() {
                {loading ? 'Authenticating...' : 'Sign In'}
             </button>
          </form>
+         <p className="text-sm text-gray-500 mt-4">New on our platform? {' '}
+            <button
+               type="button"
+               onClick={() => router.push('/?mode=register')}
+               className="text-orange-500 hover:underline">
+               Create an account
+            </button>
+         </p>
       </div>
    )
 }
