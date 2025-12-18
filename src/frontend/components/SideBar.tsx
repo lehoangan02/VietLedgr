@@ -11,10 +11,11 @@ export default function Sidebar() {
       { title: 'Main', items: ['Dashboard Report', 'Manage Staffs'] },
       { title: 'Inventory', items: ['Products', 'Category & Brands'] },
       { title: 'Stock & Purchases', items: ['Manage Stock', 'Stock Transfer', 'Purchase Orders', 'Purchase Returns'] },
-      { title: 'Sales', items: ['Manage Sales', 'Sales Orders'] },
+      { title: 'Sales', items: ['Sales Management'] },
+      { title: 'Ledger', items: ['General Ledger', 'Trial Balance', 'Balance Sheet', 'Expenses'] },
       { title: 'Locations', items: ['Stores', 'Warehouses'] },
       { title: 'Partners', items: ['Customers', 'Suppliers'] },
-      { title: 'Settings', items: [] },
+      { title: 'Settings', items: ['Advanced'] },
    ]
 
    const routeMap: Record<string, string> = {
@@ -26,13 +27,13 @@ export default function Sidebar() {
       'Stock Transfer': '/stock-transfer',
       'Purchase Orders': '/purchase-orders',
       'Purchase Returns': '/purchase-returns',
-      'Manage Sales': '/sales-manage',
-      'Sales Orders': '/sales-orders',
+      'Sales Management': '/sales',
       'Stores': '/stores',
       'Warehouses': '/warehouses',
       'Customers': '/customers',
       'Suppliers': '/suppliers',
-      'Settings': '/settings',
+      'Advanced': '/settings',
+      'General Ledger': '/ledger',
    }
 
    // Find the section that contains the current route
