@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { ChevronLeft, ChevronRight, Eye, FileText, Download, Printer } from 'lucide-react';
+import Sidebar from '@/components/SideBar';
 
 // ============================================================================
 // UNIFIED TYPESCRIPT INTERFACES
@@ -525,11 +526,10 @@ export default function SaleListPage() {
                   <button
                     key={pageNum}
                     onClick={() => setPage(pageNum)}
-                    className={`px-3 py-1 rounded-md text-sm font-medium transition ${
-                      page === pageNum
+                    className={`px-3 py-1 rounded-md text-sm font-medium transition ${page === pageNum
                         ? 'bg-orange-500 text-white'
                         : 'text-gray-600 hover:bg-gray-100'
-                    }`}
+                      }`}
                   >
                     {pageNum}
                   </button>
@@ -540,11 +540,10 @@ export default function SaleListPage() {
                   <span className="px-2 py-1 text-gray-600">...</span>
                   <button
                     onClick={() => setPage(data.total_pages)}
-                    className={`px-3 py-1 rounded-md text-sm font-medium transition ${
-                      page === data.total_pages
+                    className={`px-3 py-1 rounded-md text-sm font-medium transition ${page === data.total_pages
                         ? 'bg-orange-500 text-white'
                         : 'text-gray-600 hover:bg-gray-100'
-                    }`}
+                      }`}
                   >
                     {data.total_pages}
                   </button>
@@ -720,39 +719,40 @@ export default function SaleListPage() {
   // ========================================================================
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900">Sales Management</h1>
-        <p className="text-gray-600">View sales orders and transaction summaries</p>
-      </div>
+    <div className="w-full max-w-screen-2xl mx-auto flex gap-6">
+      <Sidebar />
+      <div className="flex-1 min-h-screen bg-gray-50 p-6">
+        {/* Header */}
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold text-gray-900">Sales Management</h1>
+          <p className="text-gray-600">View sales orders and transaction summaries</p>
+        </div>
 
-      {/* Tab Navigation */}
-      <div className="mb-6 border-b border-gray-200">
-        <button
-          onClick={() => setActiveTab('list')}
-          className={`px-4 py-2 font-semibold transition border-b-2 ${
-            activeTab === 'list'
-              ? 'text-orange-500 border-orange-500'
-              : 'text-gray-600 hover:text-gray-900 border-transparent'
-          }`}
-        >
-          Sales List
-        </button>
-        <button
-          onClick={() => setActiveTab('summary')}
-          className={`ml-4 px-4 py-2 font-semibold transition border-b-2 ${
-            activeTab === 'summary'
-              ? 'text-orange-500 border-orange-500'
-              : 'text-gray-600 hover:text-gray-900 border-transparent'
-          }`}
-        >
-          Sales Summary
-        </button>
-      </div>
+        {/* Tab Navigation */}
+        <div className="mb-6 border-b border-gray-200">
+          <button
+            onClick={() => setActiveTab('list')}
+            className={`px-4 py-2 font-semibold transition border-b-2 ${activeTab === 'list'
+                ? 'text-orange-500 border-orange-500'
+                : 'text-gray-600 hover:text-gray-900 border-transparent'
+              }`}
+          >
+            Sales List
+          </button>
+          <button
+            onClick={() => setActiveTab('summary')}
+            className={`ml-4 px-4 py-2 font-semibold transition border-b-2 ${activeTab === 'summary'
+                ? 'text-orange-500 border-orange-500'
+                : 'text-gray-600 hover:text-gray-900 border-transparent'
+              }`}
+          >
+            Sales Summary
+          </button>
+        </div>
 
-      {/* Tab Content */}
-      {activeTab === 'list' ? renderSalesListTab() : renderSalesSummaryTab()}
+        {/* Tab Content */}
+        {activeTab === 'list' ? renderSalesListTab() : renderSalesSummaryTab()}
+      </div>
     </div>
   );
 }
