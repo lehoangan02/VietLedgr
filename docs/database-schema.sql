@@ -73,6 +73,8 @@ CREATE TABLE products (
     store_id UUID NOT NULL,
     category_id UUID,
     name VARCHAR(255) NOT NULL,
+    retail_category VARCHAR(50) NOT NULL,
+    image_base64 TEXT NOT NULL,
     description TEXT,
     sku VARCHAR(100) UNIQUE NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,

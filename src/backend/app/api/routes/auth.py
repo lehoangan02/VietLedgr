@@ -6,11 +6,12 @@ from app.api.deps import SessionDep
 from app.core import security
 from app.core.config import settings
 from app.core.security import verify_password
+from app.core.invite_codes import verify_invite_code
+from app.crud.invite_code import get_unused_invite_by_code, consume_invite_code
 from app.crud.user import (create_user, get_user_by_id, get_user_by_username, update_user)
-from app.schemas.user import (UserCreate, UserResponse, UserUpdate, UserResetPassword)
-from fastapi import APIRouter, Body, Depends, HTTPException
+from app.schemas.user import (UserCreate, UserUpdate, UserResetPassword)
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
-from pydantic import BaseModel
 
 router = APIRouter(
     prefix="/auth", tags=["auth"]  # change from f"{settings.API_STR}/auth"
@@ -27,9 +28,27 @@ def signup(*, session: SessionDep, user_in: UserCreate) -> Any:
     if user:
         raise HTTPException(status_code=400, detail="Username already registered")
 
+    invite = get_unused_invite_by_code(db=session, code_plain=user_in.invite_code)
+    
+    if not invite:
+        raise HTTPException(status_code=400, detail="Invalid invite code")
+    
+    if not verify_invite_code(user_in.invite_code, invite.code_hash):
+        raise HTTPException(status_code=400, detail="Invalid invite code")
+    
     # Create new user
-    user = create_user(db=session, user=user_in)
+    user = create_user(
+        db=session, 
+        user=user_in,
+        store_id=invite.store_id,
+        role_id=invite.role_id
+    )
 
+    consume_invite_code(
+        db=session,
+        code=user_in.invite_code
+    )
+    
     # Generate access token
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = security.create_access_token(
@@ -42,7 +61,7 @@ def signup(*, session: SessionDep, user_in: UserCreate) -> Any:
         "user_id": str(user.user_id),
         "username": user.username,
         "role_id": str(user.role_id),
-        "role_name": getattr(user.role, "name", None),
+        "role_name": user.role.name,
     }
 
 
@@ -66,9 +85,10 @@ def login(
         subject=str(user.user_id), expires_delta=access_token_expires
     )
 
-    user_update = UserUpdate()
-
+    # Update last_login timestamp
+    user_update = UserUpdate(last_login=datetime.utcnow())
     update_user(db=session, user=user_update, user_id=user.user_id)
+    
     return {
         "access_token": access_token,
         "token_type": "bearer",
