@@ -40,7 +40,7 @@ export default function LoginForm() {
             document.cookie = `token=${data.access_token}; path=/;`;
             setError(null);
             router.refresh();
-            router.push('/dashboard');
+            router.push('/products');
          } else {
             setError(data.detail || 'Login failed. Check your credentials.');
          }
