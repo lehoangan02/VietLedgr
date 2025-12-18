@@ -5,7 +5,13 @@ export function proxy(request: NextRequest) {
 
     const accessToken = request.cookies.get('access_token')?.value
 
-    const isAuthRoute = pathname.startsWith('/login') || pathname.startsWith('/register') 
+    const isRootRoute = pathname === '/' || pathname === ''
+    if (isRootRoute) {
+        const redirectTarget = accessToken ? '/dashboard' : '/login'
+        return NextResponse.redirect(new URL(redirectTarget, request.url))
+    }
+
+    const isAuthRoute = pathname.startsWith('/login') || pathname.startsWith('/register')
     if (accessToken && isAuthRoute) {
         return NextResponse.redirect(new URL('/dashboard', request.url))
     }

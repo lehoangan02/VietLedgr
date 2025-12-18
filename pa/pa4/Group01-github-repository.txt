@@ -1,0 +1,2 @@
+Main branch: https://github.com/lehoangan02/VietLedgr
+Development branch: https://github.com/lehoangan02/VietLedgr/tree/dev

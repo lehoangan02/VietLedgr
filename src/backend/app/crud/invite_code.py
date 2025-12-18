@@ -90,5 +90,42 @@ def list_invite_codes_for_store(
   return list(db.execute(stmt).scalars().all())
 
 
+def list_invite_codes_for_creator(
+  *,
+  db: Session,
+  creator_user_id: uuid.UUID,
+  include_used: bool = False,
+  limit: int = 50,
+  offset: int = 0,
+) -> list[InviteCode]:
+  """List invite codes created by a specific user.
+
+  This is useful for showing a user all codes they have created,
+  regardless of which store the code targets.
+  """
+
+  stmt = select(InviteCode).where(InviteCode.created_by_user_id == creator_user_id)
+  if not include_used:
+    stmt = stmt.where(InviteCode.used_at.is_(None))
+  stmt = stmt.order_by(InviteCode.created_at.desc()).limit(limit).offset(offset)
+  return list(db.execute(stmt).scalars().all())
+
+
+def list_all_invite_codes(
+  *,
+  db: Session,
+  include_used: bool = True,
+  limit: int = 50,
+  offset: int = 0,
+) -> list[InviteCode]:
+  """List invite codes for all stores (admin use only)."""
+
+  stmt = select(InviteCode)
+  if not include_used:
+    stmt = stmt.where(InviteCode.used_at.is_(None))
+  stmt = stmt.order_by(InviteCode.created_at.desc()).limit(limit).offset(offset)
+  return list(db.execute(stmt).scalars().all())
+
+
 def get_role_by_id(db: Session, role_id: uuid.UUID) -> Role | None:
   return db.get(Role, role_id)

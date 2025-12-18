@@ -4,10 +4,14 @@ from fastapi import APIRouter, HTTPException
 from sqlalchemy.orm import Session
 
 from app.api.deps import CurrentUser, SessionDep
-from app.core.invite_codes import generate_invite_code
-from app.crud.invite_code import create_invite_code
+from app.crud.invite_code import (
+  create_invite_code,
+  list_all_invite_codes,
+  list_invite_codes_for_creator,
+  list_invite_codes_for_store,
+)
 from app.models import Role
-from app.schemas.invite_codes import InviteCodeCreate, InviteCodeResponse
+from app.schemas.invite_codes import InviteCodeCreate, InviteCodeResponse, InviteRole
 
 router = APIRouter(prefix="/invite-codes", tags=["invite-codes"])
 
@@ -23,7 +27,7 @@ def create_invite(
     raise HTTPException(status_code=403, detail="Not allowed")
   
   target_role = session.query(Role).filter(Role.role_id == payload.role_id).first()
-  if not target_role:
+  if target_role is None:
     raise HTTPException(status_code=404, detail="Role not found")
   
   target_role_name = (target_role.name or "").strip().lower()
@@ -48,9 +52,90 @@ def create_invite(
   
   return InviteCodeResponse(
     id=invite[0].id,
-    code=invite[1],
-    role_id=invite[0].role_id,
-    created_by_user_id=invite[0].created_by_user_id,
+    plain_code=invite[1],
+    role_name=invite[0].role.name,
+    created_by_user_name=invite[0].created_by.username,
     created_at=invite[0].created_at,
-    store_id=invite[0].store_id
+    store_name=invite[0].store.name
   )
+
+
+@router.get("", response_model=list[InviteCodeResponse])
+def list_invites(
+  *,
+  session: SessionDep,
+  current_user: CurrentUser,
+  include_used: bool = True,
+  limit: int = 50,
+  offset: int = 0,
+):
+  """List invite codes based on the current user's role.
+
+  - Admin: sees invite codes for all stores.
+  - Manager: sees invite codes for their own store.
+  - Others: not allowed.
+
+  Note: the original plain invite code is not stored in the database
+  (only its hash and digest are kept), so this endpoint returns
+  metadata about each invite. The "code" field in the response
+  is a fixed placeholder value and should not be treated as the
+  actual invite string.
+  """
+
+  role_name = (getattr(current_user.role, "name", "") or "").strip().lower()
+
+  if role_name == "admin":
+    invites = list_all_invite_codes(
+      db=session,
+      include_used=include_used,
+      limit=limit,
+      offset=offset,
+    )
+  elif role_name == "manager":
+    invites = list_invite_codes_for_store(
+      db=session,
+      store_id=current_user.store_id,
+      include_used=include_used,
+      limit=limit,
+      offset=offset,
+    )
+  else:
+    raise HTTPException(status_code=403, detail="Not allowed")
+  inv = invites
+  return [
+    InviteCodeResponse(
+      id=inv.id,
+      role_name=inv.role.name,
+      store_name=inv.store.name,
+      created_by_user_name=inv.created_by.username,
+      used_at=inv.used_at,
+      created_at=inv.created_at,
+    )
+    for inv in invites
+  ]
+
+
+@router.get("/roles", response_model=list[InviteRole])
+def list_invite_roles(
+  *,
+  session: SessionDep,
+  current_user: CurrentUser,
+):
+  """Return roles that can be used as invite targets for the current user.
+
+  - Admin: can invite Manager and Cashier.
+  - Manager: can invite only Cashier.
+  """
+
+  creator_role_name = (getattr(current_user.role, "name", "") or "").strip().lower()
+
+  query = session.query(Role)
+
+  if creator_role_name == "admin":
+    roles = query.filter(Role.name.in_(["Manager", "Cashier"])).all()
+  elif creator_role_name == "manager":
+    roles = query.filter(Role.name.ilike("cashier")).all()
+  else:
+    raise HTTPException(status_code=403, detail="Not allowed")
+
+  return [InviteRole(id=role.role_id, name=role.name) for role in roles]

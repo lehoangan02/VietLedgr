@@ -8,7 +8,7 @@ export default function Sidebar() {
    const pathname = usePathname()
 
    const sections = [
-      { title: 'Main', items: ['Dashboard Report', 'Manage Staffs'] },
+      { title: 'Main', items: ['Dashboard Report', 'Manage Invite Code'] },
       { title: 'Inventory', items: ['Products', 'Category & Brands'] },
       { title: 'Stock & Purchases', items: ['Manage Stock', 'Stock Transfer', 'Purchase Orders', 'Purchase Returns'] },
       { title: 'Sales', items: ['Sales Management'] },
@@ -20,7 +20,7 @@ export default function Sidebar() {
 
    const routeMap: Record<string, string> = {
       'Dashboard Report': '/dashboard',
-      'Manage Staffs': '/staff-manage',
+      'Manage Invite Code': '/invite-code',
       'Products': '/products',
       'Category & Brands': '/brands',
       'Manage Stock': '/stock-manage',
