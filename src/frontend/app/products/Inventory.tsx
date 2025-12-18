@@ -1,6 +1,6 @@
 'use client'
 import React, { useMemo, useState, useEffect } from 'react'
-import ProductTable from '@/components/ProductTable'
+import ProductTable from '@/components/productTable'
 
 interface BatchItem {
    batch_id: string;

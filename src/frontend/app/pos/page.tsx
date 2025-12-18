@@ -1,6 +1,5 @@
 'use client'
-import React, { useMemo, useState } from 'react'
-import TestProduct from '@/public/meme.webp'
+import React, { useMemo, useState, useEffect } from 'react'
 import type { StaticImageData } from 'next/image'
 import { Trash2 } from 'lucide-react'
 import { toast, ToastContainer } from 'react-toastify'
@@ -10,7 +9,7 @@ import InvoicePrint from '@/components/InvoicePrint'
 type Product = {
    sku: string
    name: string
-   img?: string | StaticImageData
+   img?: string
    category: string
    brand: string
    price: string
@@ -21,22 +20,34 @@ type Product = {
    createdBy?: { name: string; avatar?: string }
 }
 
-const MOCK: Product[] = [
-   { sku: 'PT001', name: 'Lenovo IdeaPad 3', img: TestProduct, category: 'Computers', brand: 'Lenovo', price: '$600', unit: 'Pc', qty: 100, orders: 24, expectedOutDays: 30, createdBy: { name: 'James Kirwin', avatar: 'https://i.pravatar.cc/40?img=1' } },
-   { sku: 'PT002', name: 'Beats Pro', img: TestProduct, category: 'Electronics', brand: 'Beats', price: '$160', unit: 'Pc', qty: 140, orders: 12, expectedOutDays: 60, createdBy: { name: 'Francis Chang', avatar: 'https://i.pravatar.cc/40?img=2' } },
-   { sku: 'PT003', name: 'Nike Jordan', img: TestProduct, category: 'Shoe', brand: 'Nike', price: '$110', unit: 'Pc', qty: 300, orders: 45, expectedOutDays: 15, createdBy: { name: 'Antonio Engle', avatar: 'https://i.pravatar.cc/40?img=3' } },
-   { sku: 'PT004', name: 'Apple Series 5 Watch', img: TestProduct, category: 'Electronics', brand: 'Apple', price: '$120', unit: 'Pc', qty: 450, orders: 5, expectedOutDays: 120, createdBy: { name: 'Leo Kelly', avatar: 'https://i.pravatar.cc/40?img=4' } },
-   { sku: 'PT005', name: 'Amazon Echo Dot', img: TestProduct, category: 'Electronics', brand: 'Amazon', price: '$80', unit: 'Pc', qty: 320, orders: 30, expectedOutDays: 25, createdBy: { name: 'Annette Walker', avatar: 'https://i.pravatar.cc/40?img=5' } },
-   { sku: 'PT006', name: 'Sanford Chair Sofa', img: TestProduct, category: 'Furniture', brand: 'Modern Wave', price: '$320', unit: 'Pc', qty: 650, orders: 8, expectedOutDays: 90, createdBy: { name: 'John Weaver', avatar: 'https://i.pravatar.cc/40?img=6' } },
-   { sku: 'PT007', name: 'Red Premium Satchel', img: TestProduct, category: 'Bags', brand: 'Dior', price: '$60', unit: 'Pc', qty: 700, orders: 60, expectedOutDays: 7, createdBy: { name: 'Gary Hennessy', avatar: 'https://i.pravatar.cc/40?img=7' } },
-   { sku: 'PT008', name: 'iPhone 14 Pro', img: TestProduct, category: 'Phone', brand: 'Apple', price: '$540', unit: 'Pc', qty: 630, orders: 95, expectedOutDays: 5, createdBy: { name: 'Eleanor Panek', avatar: 'https://i.pravatar.cc/40?img=8' } },
-   { sku: 'PT009', name: 'Gaming Chair', img: TestProduct, category: 'Furniture', brand: 'Arlime', price: '$200', unit: 'Pc', qty: 410, orders: 18, expectedOutDays: 40, createdBy: { name: 'William Levy', avatar: 'https://i.pravatar.cc/40?img=9' } },
-   { sku: 'PT010', name: 'Borealis Backpack', img: TestProduct, category: 'Bags', brand: 'The North Face', price: '$45', unit: 'Pc', qty: 550, orders: 22, expectedOutDays: 35, createdBy: { name: 'Charlotte Klotz', avatar: 'https://i.pravatar.cc/40?img=10' } },
-   { sku: 'PT011', name: 'Samsung Galaxy S21', img: TestProduct, category: 'Phone', brand: 'Samsung', price: '$499', unit: 'Pc', qty: 210, orders: 28, expectedOutDays: 18, createdBy: { name: 'Michael Stone', avatar: 'https://i.pravatar.cc/40?img=11' } },
-   { sku: 'PT012', name: 'Sony WH-1000XM4', img: TestProduct, category: 'Audio', brand: 'Sony', price: '$350', unit: 'Pc', qty: 170, orders: 14, expectedOutDays: 50, createdBy: { name: 'Olivia Park', avatar: 'https://i.pravatar.cc/40?img=12' } },
-   { sku: 'PT013', name: 'Adidas Ultraboost', img: TestProduct, category: 'Shoe', brand: 'Adidas', price: '$180', unit: 'Pc', qty: 260, orders: 36, expectedOutDays: 20, createdBy: { name: 'Ryan Cole', avatar: 'https://i.pravatar.cc/40?img=13' } },
-   { sku: 'PT014', name: 'Logitech MX Master 3', img: TestProduct, category: 'Accessories', brand: 'Logitech', price: '$99', unit: 'Pc', qty: 480, orders: 10, expectedOutDays: 75, createdBy: { name: 'Sofia Ramos', avatar: 'https://i.pravatar.cc/40?img=14' } },
-]
+interface ProductInfo {
+   product_id: string
+   name: string
+   retail_category: string
+   brand?: string
+   unit?: string
+   image_base64?: string
+}
+
+interface BatchItem {
+   batch_id: string
+   product_id: string
+   warehouse_id: string
+   stock: number
+   cost: number
+   sale_price: number
+   import_date: string
+   expire_date: string
+   supplier_name: string
+   created_at: string
+   updated_at: string
+}
+
+interface Warehouse {
+   warehouse_id: string;
+   name: string;
+   location: string;
+}
 
 type CartItem = {
    product: Product
@@ -50,16 +61,99 @@ export default function PosPage() {
    const [paymentMethod, setPaymentMethod] = useState<string | null>(null)
    const [qrUrl, setQrUrl] = useState<string | null>(null)
    const [customerName, setCustomerName] = useState('Bùi Lê Hoàng')
+   const [batches, setBatches] = useState<BatchItem[]>([])
+   const [productsInfo, setProductsInfo] = useState<ProductInfo[]>([])
+   const [error, setError] = useState<string>('')
 
-   const categories = useMemo(() => Array.from(new Set(MOCK.map((p) => p.category))), [])
+   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
+   const [selectedWarehouse, setSelectedWarehouse] = useState<string | null>(null);
 
-   const products = useMemo(() => {
-      return MOCK.filter((p) => {
-         if (category && p.category !== category) return false
-         if (!query) return true
-         return p.name.toLowerCase().includes(query.toLowerCase()) || p.sku.toLowerCase().includes(query.toLowerCase())
+   useEffect(() => {
+      const fetchWarehouses = async () => {
+         try {
+            const res = await fetch('http://localhost:8000/api/warehouses/');
+            const data = await res.json();
+            const items = Array.isArray(data) ? data : (data.items ?? []);
+            setWarehouses(items);
+            if (items.length > 0) setSelectedWarehouse(items[0].warehouse_id);
+         } catch (err) {
+            // handle error if needed
+         }
+      };
+      fetchWarehouses();
+   }, []);
+
+   useEffect(() => {
+      const fetchBatches = async () => {
+         try {
+            const res = await fetch('http://localhost:8000/api/batches/')
+            const data = await res.json()
+            setBatches(Array.isArray(data) ? data : (data.items ?? []))
+         } catch (err) {
+            setError('Could not connect to the server.')
+         }
+      }
+      fetchBatches()
+   }, [])
+
+   useEffect(() => {
+      const fetchProducts = async () => {
+         try {
+            const res = await fetch('http://localhost:8000/api/products/')
+            const data = await res.json()
+            setProductsInfo(Array.isArray(data) ? data : (data.items ?? []))
+         } catch (err) {
+            // Optionally handle error
+         }
+      }
+      fetchProducts()
+   }, [])
+
+   // Build a lookup for product info by product_id
+   const productMap = useMemo(() => {
+      const map: Record<string, ProductInfo> = {}
+      productsInfo.forEach(p => { map[p.product_id] = p })
+      return map
+   }, [productsInfo])
+
+   // Map batch data to Product[]
+   const products: Product[] = useMemo(() => {
+      return batches.map(batch => {
+         const product = productMap[batch.product_id]
+         const expiring_date = batch.expire_date ? new Date(batch.expire_date) : null
+         const today = new Date()
+         let expectedOutDays = 0
+         if (expiring_date) {
+            const diffTime = expiring_date.getTime() - today.getTime()
+            expectedOutDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+         }
+
+         return {
+            sku: batch.batch_id,
+            name: product?.name || batch.supplier_name || '',
+            img: product?.image_base64,
+            category: product?.retail_category || '',
+            brand: product?.brand || '',
+            price: batch.sale_price ? `$${batch.sale_price}` : '',
+            unit: product?.unit || '',
+            qty: batch.stock ?? 0,
+            orders: 0,
+            expectedOutDays,
+            createdBy: batch.supplier_name ? { name: batch.supplier_name } : undefined
+         }
       })
-   }, [query, category])
+   }, [batches, productMap])
+
+   const categories = useMemo(() => Array.from(new Set(products.map((p) => p.category))), [products])
+
+   const filteredProducts = useMemo(() => {
+      return products.filter((p, idx) => {
+         const batch = batches[idx];
+         return (!selectedWarehouse || batch.warehouse_id === selectedWarehouse) &&
+            (!category || p.category === category) &&
+            (!query || p.name.toLowerCase().includes(query.toLowerCase()) || p.sku.toLowerCase().includes(query.toLowerCase()));
+      });
+   }, [products, batches, selectedWarehouse, category, query]);
 
    function addToCart(prod: Product) {
       setCart((prev) => {
@@ -128,8 +222,6 @@ export default function PosPage() {
       window.print();
    };
 
-
-
    const cartItems = Object.values(cart)
 
    const subtotal = useMemo(() => {
@@ -140,6 +232,8 @@ export default function PosPage() {
    }, [cartItems])
 
    const formatter = new Intl.NumberFormat(undefined, { style: 'currency', currency: 'USD', maximumFractionDigits: 2 })
+
+   if (error) return <div className="text-red-500">{error}</div>;
 
    return (
       <>
@@ -165,11 +259,14 @@ export default function PosPage() {
                      </div>
 
                      <div>
-                        <select className="border rounded px-3 py-2 w-56">
-                           <option>Main Warehouse</option>
-                           <option>Downtown Store</option>
-                           <option>Demo Location</option>
-                           <option>Online Store</option>
+                        <select
+                           className="border rounded px-3 py-2 w-56"
+                           value={selectedWarehouse ?? ''}
+                           onChange={e => setSelectedWarehouse(e.target.value)}
+                        >
+                           {warehouses.map(wh => (
+                              <option key={wh.warehouse_id} value={wh.warehouse_id}>{wh.name}</option>
+                           ))}
                         </select>
                      </div>
                   </div>
@@ -188,10 +285,14 @@ export default function PosPage() {
                   </div>
 
                   <div className="grid grid-cols-3 gap-4">
-                     {products.map((p) => (
+                     {filteredProducts.map((p) => (
                         <div key={p.sku} className="bg-white border rounded-lg p-3 hover:shadow cursor-pointer" onClick={() => addToCart(p)}>
                            <div className="h-36 flex items-center justify-center">
-                              <img src={typeof p.img === 'string' ? p.img : p.img?.src} alt={p.name} className="max-h-32 object-contain" />
+                              <img
+                                 src={p.img ? (p.img.startsWith('http') ? p.img : `data:image/png;base64,${p.img}`) : ''}
+                                 alt={p.name}
+                                 className="max-h-32 object-contain"
+                              />
                            </div>
                            <div className="mt-3">
                               <div className="text-sm font-medium text-gray-800">{p.name}</div>
@@ -235,7 +336,11 @@ export default function PosPage() {
                               const priceNum = Number(String(it.product.price).replace(/[^0-9.-]+/g, '')) || 0
                               return (
                                  <div key={it.product.sku} className="flex items-center gap-3 border-b pb-2">
-                                    <img src={typeof it.product.img === 'string' ? it.product.img : it.product.img?.src} alt={it.product.name} className="w-12 h-12 object-cover rounded" />
+                                    <img
+                                       src={it.product.img ? (it.product.img.startsWith('http') ? it.product.img : `data:image/png;base64,${it.product.img}`) : ''}
+                                       alt={it.product.name}
+                                       className="w-12 h-12 object-cover rounded"
+                                    />
                                     <div className="flex-1">
                                        <div className="text-sm font-medium">{it.product.name}</div>
                                        <div className="text-xs text-gray-400">{it.product.sku}</div>
