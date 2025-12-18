@@ -79,11 +79,11 @@ export default function ProductTable({ products = MOCK }: { products?: Product[]
                      <th className="py-5 pl-3 w-12">#</th>
                      <th className="py-5">Product Name</th>
                      <th className="py-5">Category</th>
-                     <th className="py-5">Brand</th>
+                     {/* <th className="py-5">Brand</th> */}
                      <th className="py-5">Price</th>
-                     <th className="py-5">Unit</th>
+                     {/* <th className="py-5">Unit</th> */}
                      <th className="py-5">Quantity</th>
-                     <th className="py-5">Orders</th>
+                     <th className="py-5">Ordered</th>
                      <th className="py-5">Expected Out of Stock</th>
                      <th className="py-5 pr-3 text-right">Actions</th>
                   </tr>
@@ -95,7 +95,7 @@ export default function ProductTable({ products = MOCK }: { products?: Product[]
 
                         <td className="py-5">
                            <div className="flex items-center gap-4">
-                              <img src={typeof p.img === 'string' ? p.img : p.img?.src} alt="" className="w-12 h-12 rounded-md object-cover" />
+                              <img src={`data:image/png;base64,${p.img}`} alt="Product" className="w-12 h-12 rounded-md object-cover" />
                               <div>
                                  <div className="font-medium text-gray-800">{p.name}</div>
                                  <div className="text-xs text-gray-400">{p.sku}</div>
@@ -104,9 +104,9 @@ export default function ProductTable({ products = MOCK }: { products?: Product[]
                         </td>
 
                         <td className="py-5 text-gray-600">{p.category}</td>
-                        <td className="py-5 text-gray-600">{p.brand}</td>
+                        {/* <td className="py-5 text-gray-600">{p.brand}</td> */}
                         <td className="py-5 text-gray-600">{p.price}</td>
-                        <td className="py-5 text-gray-600">{p.unit}</td>
+                        {/* <td className="py-5 text-gray-600">{p.unit}</td> */}
                         <td className="py-5 text-gray-600">{p.qty}</td>
 
                         <td className="py-5 text-gray-700 font-medium">{p.orders}</td>

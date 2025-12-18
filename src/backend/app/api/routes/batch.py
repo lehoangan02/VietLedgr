@@ -60,7 +60,7 @@ def update_batch(
         raise HTTPException(status_code=404, detail="Batch not found")
     return db_batch
 
-@router.get("/", response_model=batch_schema.BatchList)
+@router.get("/", response_model=list[batch_schema.BatchResponse])
 def get_batches(
     *,
     session: SessionDep,
