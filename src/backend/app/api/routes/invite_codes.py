@@ -101,7 +101,6 @@ def list_invites(
     )
   else:
     raise HTTPException(status_code=403, detail="Not allowed")
-  inv = invites
   return [
     InviteCodeResponse(
       id=inv.id,
