@@ -24,7 +24,7 @@ def create_invite(
 ):
   creator_role_name = (getattr(current_user.role, "name", "") or "").strip().lower()
   if creator_role_name not in {"admin", "manager"}:
-    raise HTTPException(status_code=403, detail="Not allowed")
+    raise HTTPException(status_code=403, detail="Your role is not allowed")
   
   target_role = session.query(Role).filter(Role.role_id == payload.role_id).first()
   if target_role is None:
@@ -101,7 +101,6 @@ def list_invites(
     )
   else:
     raise HTTPException(status_code=403, detail="Not allowed")
-  inv = invites
   return [
     InviteCodeResponse(
       id=inv.id,

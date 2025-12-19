@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Annotated, Any
 
 from app.api.deps import SessionDep
@@ -86,7 +86,7 @@ def login(
     )
 
     # Update last_login timestamp
-    user_update = UserUpdate(last_login=datetime.utcnow())
+    user_update = UserUpdate(last_login=datetime.now(timezone.utc))
     update_user(db=session, user=user_update, user_id=user.user_id)
     
     return {

@@ -1,12 +1,9 @@
 from __future__ import annotations
 import uuid
-from datetime import datetime
-from typing import Final
-
+from datetime import datetime, timezone
 from sqlalchemy import select
 from sqlalchemy.orm import Session
-
-from app.core.invite_codes import generate_invite_code, hash_invite_code, digest_invite_code
+from app.core.invite_codes import generate_invite_code, hash_invite_code, digest_invite_code, verify_invite_code
 from app.models import InviteCode, Role
 
 def create_invite_code(
@@ -53,10 +50,10 @@ def consume_invite_code(
   if inv.used_at is not None:
     raise ValueError("Invite code already used")
   
-  if not (code, inv.code_hash):
+  if not verify_invite_code(code, inv.code_hash):
     raise ValueError("Invalid invite code")
   
-  inv.used_at = datetime.utcnow()
+  inv.used_at = datetime.now(timezone.utc)
   
   try:
     db.commit()
