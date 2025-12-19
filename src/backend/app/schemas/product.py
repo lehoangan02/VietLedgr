@@ -2,8 +2,12 @@ from pydantic import BaseModel, Field, ConfigDict
 from datetime import datetime
 from uuid import UUID
 from.category import ProductCategoryResponse
+
+
 class ProductBase(BaseModel):
   name: str = Field(..., min_length=1, max_length=255, description="Product name")
+  retail_category: str = Field(..., description="Retail category of the product")
+  image_base64: str | None = Field(None, description="Base64 encoded image of the product")
   description: str | None = Field(None, max_length=1000, description="Product description")
   sku: str = Field(..., min_length=1, max_length=100, description="Stock Keeping Unit")
   category_id: UUID | None = Field(None, description="Product category")
@@ -11,7 +15,6 @@ class ProductBase(BaseModel):
 class ProductCreate(ProductBase):
   """Create product request"""
   store_id: UUID = Field(..., description="Store ID")
-
 
 class ProductUpdate(BaseModel):
   """Update product request"""
