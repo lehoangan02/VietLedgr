@@ -488,8 +488,8 @@ def main():
 
     with SessionLocal() as session:
         admin_role = upsert_role(session, "Admin", "Full system access")
-        manager_role = upsert_role(session, "Manager", "Store management access")
-        cashier_role = upsert_role(session, "Cashier", "Point of sale access")
+        upsert_role(session, "Manager", "Store management access")
+        upsert_role(session, "Cashier", "Point of sale access")
 
         store = upsert_store(session)
 
