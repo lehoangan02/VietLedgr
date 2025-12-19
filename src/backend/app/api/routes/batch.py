@@ -36,7 +36,7 @@ def get_batch_by_id(
 def create_batch(
     *,
     session: SessionDep,
-    batch_in: batch.BatchCreate
+    batch_in: batch_schema.BatchCreate
 ) -> Any:
     """
     Create a new batch
@@ -50,7 +50,7 @@ def create_batch(
 def update_batch(
     session: SessionDep,
     batch_id: uuid.UUID,
-    batch_in: batch.BatchUpdate
+    batch_in: batch_schema.BatchUpdate
 ) -> Any:
     """
     Update a batch
@@ -71,7 +71,11 @@ def get_batches(
     Retrieve multiple batches with pagination
     """
     db_batches = batch.get_batches(db=session, skip=skip, limit=limit)
-    return db_batches
+    total = session.query(Batch).count()
+    return {
+        "items": db_batches,
+        "total": total
+    }
 
 @router.delete("/{batch_id}", response_model=dict)
 def delete_batch(
