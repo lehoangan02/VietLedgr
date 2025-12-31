@@ -14,6 +14,7 @@ type Product = {
    sku: string
    name: string
    img?: string | StaticImageData
+   image_base64?: string
    retail_category?: string  // CHANGED FROM category_name
    brand?: string
    price: number | string
@@ -243,14 +244,14 @@ export default function ProductTable({
                         <td className="py-4">
                            <div className="flex items-center gap-4">
                               <div className="w-11 h-11 flex-shrink-0 bg-gray-100 rounded-lg flex items-center justify-center overflow-hidden">
-                                 {p.img ? (
-                                    <img 
-                                       src={typeof p.img === 'string' ? p.img : (p.img as StaticImageData).src} 
-                                       alt={p.name} 
-                                       className="w-full h-full object-cover" 
-                                    />
+                                 {p.image_base64 ? (
+                                 <img 
+                                    src={`data:image/png;base64,${p.image_base64}`} 
+                                    alt={p.name} 
+                                    className="w-full h-full object-cover" 
+                                 />
                                  ) : (
-                                    <Package className="text-gray-300" size={20} />
+                                 <Package className="text-gray-300" size={20} />
                                  )}
                               </div>
                               <div>
@@ -258,7 +259,7 @@ export default function ProductTable({
                                  <div className="text-xs text-gray-400 font-mono uppercase tracking-wider">{p.sku}</div>
                               </div>
                            </div>
-                        </td>
+                           </td>
                         <td className="py-4">
                            {/* Corrected Field: retail_category */}
                            <span className="px-2.5 py-1 bg-gray-100 text-gray-600 rounded-full text-[11px] font-bold uppercase tracking-tight">
