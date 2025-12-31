@@ -1,4 +1,3 @@
-# app/api/routes/auth.py
 import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Annotated, Any
@@ -15,7 +14,6 @@ from app.models import User
 from app.schemas.user import UserCreate, UserResetPassword, UserUpdate
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
-from sqlalchemy.orm import joinedload
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -30,7 +28,6 @@ def signup(*, session: SessionDep, user_in: UserCreate) -> Any:
     if not invite or not verify_invite_code(user_in.invite_code, invite.code_hash):
         raise HTTPException(status_code=400, detail="Invalid invite code")
 
-    # atomic consume (locks it logically)
     if not consume_invite_code(session, invite_id=invite.id):
         raise HTTPException(status_code=400, detail="Invite code already used")
 
