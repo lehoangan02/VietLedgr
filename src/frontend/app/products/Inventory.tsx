@@ -32,7 +32,7 @@ interface Warehouse {
 }
 
 type Product = {
-   sku: string
+   product_id: string
    name: string
    img?: string
    category: string
@@ -117,7 +117,7 @@ export default function Inventory() {
             expectedOutDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
          }
          return {
-            sku: batch.batch_id,
+            product_id: product?.product_id,
             name: product?.name || batch.supplier_name || '',
             img: product?.image_base64,
             category: product?.retail_category || '',

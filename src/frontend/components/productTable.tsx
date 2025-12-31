@@ -6,7 +6,7 @@ import TestProduct from '@/public/meme.webp'
 import { useRouter } from 'next/navigation'
 
 type Product = {
-   sku: string
+   product_id: string
    name: string
    img?: string | StaticImageData
    category: string
@@ -26,22 +26,7 @@ interface Warehouse {
    location: string;
 }
 
-const MOCK: Product[] = [
-   { sku: 'PT001', name: 'Lenovo IdeaPad 3', img: TestProduct, category: 'Computers', brand: 'Lenovo', price: '$600', unit: 'Pc', qty: 100, orders: 24, expectedOutDays: 30, createdBy: { name: 'James Kirwin', avatar: 'https://i.pravatar.cc/40?img=1' } },
-   { sku: 'PT002', name: 'Beats Pro', img: TestProduct, category: 'Electronics', brand: 'Beats', price: '$160', unit: 'Pc', qty: 140, orders: 12, expectedOutDays: 60, createdBy: { name: 'Francis Chang', avatar: 'https://i.pravatar.cc/40?img=2' } },
-   { sku: 'PT003', name: 'Nike Jordan', img: TestProduct, category: 'Shoe', brand: 'Nike', price: '$110', unit: 'Pc', qty: 300, orders: 45, expectedOutDays: 15, createdBy: { name: 'Antonio Engle', avatar: 'https://i.pravatar.cc/40?img=3' } },
-   { sku: 'PT004', name: 'Apple Series 5 Watch', img: TestProduct, category: 'Electronics', brand: 'Apple', price: '$120', unit: 'Pc', qty: 450, orders: 5, expectedOutDays: 120, createdBy: { name: 'Leo Kelly', avatar: 'https://i.pravatar.cc/40?img=4' } },
-   { sku: 'PT005', name: 'Amazon Echo Dot', img: TestProduct, category: 'Electronics', brand: 'Amazon', price: '$80', unit: 'Pc', qty: 320, orders: 30, expectedOutDays: 25, createdBy: { name: 'Annette Walker', avatar: 'https://i.pravatar.cc/40?img=5' } },
-   { sku: 'PT006', name: 'Sanford Chair Sofa', img: TestProduct, category: 'Furniture', brand: 'Modern Wave', price: '$320', unit: 'Pc', qty: 650, orders: 8, expectedOutDays: 90, createdBy: { name: 'John Weaver', avatar: 'https://i.pravatar.cc/40?img=6' } },
-   { sku: 'PT007', name: 'Red Premium Satchel', img: TestProduct, category: 'Bags', brand: 'Dior', price: '$60', unit: 'Pc', qty: 700, orders: 60, expectedOutDays: 7, createdBy: { name: 'Gary Hennessy', avatar: 'https://i.pravatar.cc/40?img=7' } },
-   { sku: 'PT008', name: 'iPhone 14 Pro', img: TestProduct, category: 'Phone', brand: 'Apple', price: '$540', unit: 'Pc', qty: 630, orders: 95, expectedOutDays: 5, createdBy: { name: 'Eleanor Panek', avatar: 'https://i.pravatar.cc/40?img=8' } },
-   { sku: 'PT009', name: 'Gaming Chair', img: TestProduct, category: 'Furniture', brand: 'Arlime', price: '$200', unit: 'Pc', qty: 410, orders: 18, expectedOutDays: 40, createdBy: { name: 'William Levy', avatar: 'https://i.pravatar.cc/40?img=9' } },
-   { sku: 'PT010', name: 'Borealis Backpack', img: TestProduct, category: 'Bags', brand: 'The North Face', price: '$45', unit: 'Pc', qty: 550, orders: 22, expectedOutDays: 35, createdBy: { name: 'Charlotte Klotz', avatar: 'https://i.pravatar.cc/40?img=10' } },
-   { sku: 'PT011', name: 'Samsung Galaxy S21', img: TestProduct, category: 'Phone', brand: 'Samsung', price: '$499', unit: 'Pc', qty: 210, orders: 28, expectedOutDays: 18, createdBy: { name: 'Michael Stone', avatar: 'https://i.pravatar.cc/40?img=11' } },
-   { sku: 'PT012', name: 'Sony WH-1000XM4', img: TestProduct, category: 'Audio', brand: 'Sony', price: '$350', unit: 'Pc', qty: 170, orders: 14, expectedOutDays: 50, createdBy: { name: 'Olivia Park', avatar: 'https://i.pravatar.cc/40?img=12' } },
-   { sku: 'PT013', name: 'Adidas Ultraboost', img: TestProduct, category: 'Shoe', brand: 'Adidas', price: '$180', unit: 'Pc', qty: 260, orders: 36, expectedOutDays: 20, createdBy: { name: 'Ryan Cole', avatar: 'https://i.pravatar.cc/40?img=13' } },
-   { sku: 'PT014', name: 'Logitech MX Master 3', img: TestProduct, category: 'Accessories', brand: 'Logitech', price: '$99', unit: 'Pc', qty: 480, orders: 10, expectedOutDays: 75, createdBy: { name: 'Sofia Ramos', avatar: 'https://i.pravatar.cc/40?img=14' } },
-]
+const MOCK: Product[] = []
 
 export default function ProductTable({
    products = MOCK,
@@ -60,6 +45,10 @@ export default function ProductTable({
    // Use warehouses from props if provided (from Inventory), otherwise fetch
    const [warehouses, setWarehouses] = useState<Warehouse[]>(warehousesProp ?? [])
    const [selectedWarehouse, setSelectedWarehouse] = useState<string | null>(null)
+   // Import status state
+   const [importStatus, setImportStatus] = useState<string>('')
+   const [importProgress, setImportProgress] = useState<number>(0)
+   const [importErrors, setImportErrors] = useState<string[]>([])
 
    // Only fetch warehouses if not provided by props
    useEffect(() => {
@@ -89,7 +78,7 @@ export default function ProductTable({
       return products.filter((p) => {
          return (!selectedWarehouse || p.warehouse_id === selectedWarehouse) &&
             (!category || p.category === category) &&
-            (!query || p.name.toLowerCase().includes(query.toLowerCase()) || p.sku.toLowerCase().includes(query.toLowerCase()))
+            (!query || p.name.toLowerCase().includes(query.toLowerCase()) || p.product_id.toLowerCase().includes(query.toLowerCase()))
       })
    }, [products, selectedWarehouse, category, query])
 
@@ -164,7 +153,40 @@ export default function ProductTable({
             </div>
             {/* Actions */}
             <div className="flex items-center gap-3">
-               <button className="text-sm px-3 py-2 rounded border bg-white">Import Product</button>
+               {/* Import Product Button and File Input */}
+               <input
+                  type="file"
+                  accept=".csv"
+                  id="import-product-csv"
+                  style={{ display: 'none' }}
+                  onChange={async (e) => {
+                     const file = e.target.files?.[0]
+                     if (!file) return
+                     setImportStatus('Importing...')
+                     setImportProgress(0)
+                     try {
+                        const { importProductsFromCsv } = await import('../utils/importProductsFromCsv')
+                        const result = await importProductsFromCsv(file, (cur, total) => {
+                           setImportProgress(Math.round((cur / total) * 100))
+                        })
+                        setImportStatus(`Imported: ${result.success}, Failed: ${result.failed}`)
+                        if (result.errors.length > 0) {
+                           setImportErrors(result.errors)
+                        } else {
+                           setImportErrors([])
+                        }
+                     } catch (err) {
+                        setImportStatus('Import failed')
+                        setImportErrors([(err as Error).message])
+                     }
+                  }}
+               />
+               <button
+                  className="text-sm px-3 py-2 rounded border bg-white"
+                  onClick={() => document.getElementById('import-product-csv')?.click()}
+                  type="button">
+                  Import Product
+               </button>
                <button onClick={() => router.push('/products/add-product')} className="text-sm px-3 py-2 rounded bg-orange-500 text-white">Add Product</button>
             </div>
          </div>
@@ -186,7 +208,7 @@ export default function ProductTable({
                </thead>
                <tbody>
                   {visible.map((p, i) => (
-                     <tr key={p.sku} className="border-b last:border-b-0 hover:bg-gray-50 align-middle">
+                     <tr key={p.product_id} className="border-b last:border-b-0 hover:bg-gray-50 align-middle">
                         <td className="py-5 pl-3 text-gray-600">{(page - 1) * pageSize + i + 1}</td>
                         <td className="py-5">
                            <div className="flex items-center gap-4">
@@ -201,7 +223,7 @@ export default function ProductTable({
                               />
                               <div>
                                  <div className="font-medium text-gray-800">{p.name}</div>
-                                 <div className="text-xs text-gray-400">{p.sku}</div>
+                                 <div className="text-xs text-gray-400">{p.product_id}</div>
                               </div>
                            </div>
                         </td>
@@ -217,8 +239,40 @@ export default function ProductTable({
                         <td className="py-5 pr-3 text-right">
                            <div className="inline-flex items-center gap-3">
                               <button title="View" className="p-2 rounded hover:bg-gray-100"><Eye size={16} /></button>
-                              <button title="Edit" className="p-2 rounded hover:bg-gray-100"><Edit3 size={16} /></button>
-                              <button title="Delete" className="p-2 rounded hover:bg-gray-100 text-red-500"><Trash2 size={16} /></button>
+                              <button
+                                 title="Edit"
+                                 className="p-2 rounded hover:bg-gray-100"
+                                 onClick={() => {
+                                    // If you have product_id in your real data, use it. For MOCK, fallback to sku.
+                                    const id = (p as any).product_id || p.product_id;
+                                    router.push(`/products/edit-product/${id}`)
+                                 }}
+                              >
+                                 <Edit3 size={16} />
+                              </button>
+                              <button
+                                 title="Delete"
+                                 className="p-2 rounded hover:bg-gray-100 text-red-500"
+                                 onClick={async () => {
+                                    if (!window.confirm('Are you sure you want to delete this product?')) return;
+                                    try {
+                                       const id = (p as any).product_id || p.product_id;
+                                       const res = await fetch(`/api/products/${id}`, { method: 'DELETE' });
+                                       if (res.ok) {
+                                          // Option 1: reload page
+                                          window.location.reload();
+                                          // Option 2: update state (uncomment below if you want to update without reload)
+                                          // setProducts(products => products.filter(prod => prod.product_id !== id));
+                                       } else {
+                                          alert('Failed to delete product.');
+                                       }
+                                    } catch (err) {
+                                       alert('Error deleting product.');
+                                    }
+                                 }}
+                              >
+                                 <Trash2 size={16} />
+                              </button>
                            </div>
                         </td>
                      </tr>
@@ -226,6 +280,21 @@ export default function ProductTable({
                </tbody>
             </table>
          </div>
+
+         {/* Import status and errors */}
+         {importStatus && (
+            <div className="mt-4 text-sm">
+               <div className="font-medium">{importStatus} {importProgress > 0 && importProgress < 100 ? `(${importProgress}%)` : ''}</div>
+               {importErrors.length > 0 && (
+                  <div className="mt-2 text-red-500">
+                     <div>Errors:</div>
+                     <ul className="list-disc ml-6">
+                        {importErrors.map((err, idx) => <li key={idx}>{err}</li>)}
+                     </ul>
+                  </div>
+               )}
+            </div>
+         )}
 
          {/* Pagination */}
          <div className="flex items-center justify-between mt-4 text-sm text-gray-500">
