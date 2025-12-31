@@ -24,9 +24,6 @@ export default function Sidebar() {
       'Products': '/products',
       'Category & Brands': '/brands',
       'Manage Stock': '/stock-manage',
-      'Stock Transfer': '/stock-transfer',
-      'Purchase Orders': '/purchase-orders',
-      'Purchase Returns': '/purchase-returns',
       'Sales Management': '/sales',
       'Stores': '/stores',
       'Warehouses': '/warehouses',
@@ -34,6 +31,7 @@ export default function Sidebar() {
       'Suppliers': '/suppliers',
       'Advanced': '/settings',
       'General Ledger': '/ledger',
+      'Expenses': '/ledger/expenses',
    }
 
    // Find the section that contains the current route
