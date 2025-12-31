@@ -8,7 +8,9 @@ export interface InviteCodeItem {
   created_at: string;
 }
 
-export async function getInviteCodes(params?: string): Promise<InviteCodeItem[]> {
+export async function getInviteCodes(
+  params?: string,
+): Promise<InviteCodeItem[]> {
   const url = params ? `/api/invite-codes?${params}` : "/api/invite-codes";
 
   const res = await fetch(url, {
@@ -53,6 +55,7 @@ export async function createInviteCode(
     },
     body: JSON.stringify({
       role_id: payload.roleId,
+      to_email: payload.email,
     }),
   });
 
