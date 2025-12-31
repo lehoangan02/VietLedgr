@@ -8,10 +8,7 @@ export async function GET(request: NextRequest) {
   const accessToken = cookieStore.get("access_token")?.value;
 
   if (!accessToken) {
-    return NextResponse.json(
-      { detail: "Not authenticated" },
-      { status: 401 },
-    );
+    return NextResponse.json({ detail: "Not authenticated" }, { status: 401 });
   }
 
   const { searchParams } = new URL(request.url);
@@ -31,7 +28,11 @@ export async function GET(request: NextRequest) {
 
   if (!res.ok) {
     return NextResponse.json(
-      { detail: (data as { detail?: string } | null)?.detail ?? "Failed to fetch invite codes" },
+      {
+        detail:
+          (data as { detail?: string } | null)?.detail ??
+          "Failed to fetch invite codes",
+      },
       { status: res.status },
     );
   }
@@ -44,30 +45,31 @@ export async function POST(request: NextRequest) {
   const accessToken = cookieStore.get("access_token")?.value;
 
   if (!accessToken) {
-    return NextResponse.json(
-      { detail: "Not authenticated" },
-      { status: 401 },
-    );
+    return NextResponse.json({ detail: "Not authenticated" }, { status: 401 });
   }
 
   const body = await request.json().catch(() => null as unknown);
 
   const role_id = (body as { role_id?: string })?.role_id;
-
+  const to_email = (body as { to_email?: string })?.to_email;
   const res = await fetch(`${FASTAPI_URL}/api/invite-codes`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${accessToken}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ role_id }),
+    body: JSON.stringify({ role_id, to_email }),
   });
 
   const data = await res.json().catch(() => null);
 
   if (!res.ok) {
     return NextResponse.json(
-      { detail: (data as { detail?: string } | null)?.detail ?? "Failed to create invite code" },
+      {
+        detail:
+          (data as { detail?: string } | null)?.detail ??
+          "Failed to create invite code",
+      },
       { status: res.status },
     );
   }

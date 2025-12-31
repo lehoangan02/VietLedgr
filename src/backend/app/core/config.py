@@ -1,14 +1,10 @@
 import secrets
 from pathlib import Path
-from pydantic import (
-    AnyUrl,
-    BeforeValidator,
-    HttpUrl,
-    PostgresDsn,
-    computed_field
-)
-from typing import Optional, Any, Literal, Annotated
-from pydantic_settings import SettingsConfigDict, BaseSettings
+from typing import Annotated, Any, Literal
+
+from pydantic import (AnyUrl, BeforeValidator, EmailStr, HttpUrl, PostgresDsn,
+                      computed_field)
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 def parse_cors(v: Any) -> list[str] | str:
@@ -17,6 +13,7 @@ def parse_cors(v: Any) -> list[str] | str:
     elif isinstance(v, list | str):
         return v
     raise ValueError(v)
+
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
@@ -32,9 +29,9 @@ class Settings(BaseSettings):
     FRONTEND_HOST: str = "http://localhost:3000"
     ENVIRONMENT: Literal["local", "staging", "production"] = "local"
 
-    BACKEND_CORS_ORIGINS: Annotated[
-        list[AnyUrl] | str, BeforeValidator(parse_cors)
-    ] = []
+    BACKEND_CORS_ORIGINS: Annotated[list[AnyUrl] | str, BeforeValidator(parse_cors)] = (
+        []
+    )
 
     @computed_field  # type: ignore[prop-decorator]
     @property
@@ -62,5 +59,16 @@ class Settings(BaseSettings):
             port=self.POSTGRES_PORT,
             path=self.POSTGRES_DB,
         )
+
+    SMTP_HOST: str = "smtp-relay.brevo.com"
+    SMTP_PORT: int = 587
+    SMTP_USERNAME: str = ""
+    SMTP_PASSWORD: str = ""
+    SMTP_USE_TLS: bool = True
+
+    MAIL_FROM_NAME: str = "VietLedgr"
+    MAIL_FROM_EMAIL: EmailStr = "no-reply@example.com"
+    MAIL_ENABLED: bool = False
+
 
 settings = Settings()

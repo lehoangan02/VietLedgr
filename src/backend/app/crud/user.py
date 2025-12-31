@@ -2,21 +2,19 @@ import uuid
 from typing import Any, Dict, Optional
 
 from app import models
+from app.core.security import get_password_hash
 from app.schemas import user as user_schemas
 from sqlalchemy.orm import Session
 
-from app.core.security import get_password_hash
-
 
 def create_user(
-    db: Session, 
+    db: Session,
     user: user_schemas.UserCreate,
     store_id: uuid.UUID,
-    role_id: uuid.UUID
+    role_id: uuid.UUID,
+    *,
+    commit: bool = True,
 ) -> models.User:
-    """
-    Create a new user in the database
-    """
     db_user = models.User(
         username=user.username,
         password_hash=get_password_hash(user.password),
@@ -24,8 +22,11 @@ def create_user(
         role_id=role_id,
     )
     db.add(db_user)
-    db.commit()
-    db.refresh(db_user)
+
+    if commit:
+        db.commit()
+        db.refresh(db_user)
+
     return db_user
 
 
