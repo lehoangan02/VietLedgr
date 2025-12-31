@@ -64,11 +64,11 @@ class Settings(BaseSettings):
     SMTP_PORT: int = 587
     SMTP_USERNAME: str = ""
     SMTP_PASSWORD: str = ""
+    SMTP_USE_TLS: bool = True
 
     MAIL_FROM_NAME: str = "VietLedgr"
     MAIL_FROM_EMAIL: EmailStr = "no-reply@example.com"
-
-    MAIL_ENABLED: bool = True
+    MAIL_ENABLED: bool = False
 
 
 settings = Settings()

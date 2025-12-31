@@ -42,20 +42,24 @@ def create_invite(
             status_code=403, detail="Only admin and cashier can create invite code"
         )
 
-    invite = create_invite_code(
-        db=session,
-        creator_user_id=current_user.user_id,
-        target_role_id=payload.role_id,
-        store_id=store_id,
-    )
     try:
+        invite = create_invite_code(
+            db=session,
+            creator_user_id=current_user.user_id,
+            target_role_id=payload.role_id,
+            store_id=store_id,
+        )
         send_invite_email(
             to_email=str(payload.to_email),
             invite_code=invite[1],
             role_name=invite[0].role.name,
             store_name=invite[0].store.name,
         )
+
+        session.commit()
+        session.refresh(invite[0])
     except Exception:
+        session.rollback()
         raise HTTPException(status_code=502, detail="Failed to send invite email.")
     return InviteCodeResponse(
         id=invite[0].id,
