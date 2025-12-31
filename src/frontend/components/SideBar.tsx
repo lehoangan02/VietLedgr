@@ -30,23 +30,21 @@ export default function Sidebar() {
     { title: "Settings", items: ["Advanced"] },
   ];
 
-  const routeMap: Record<string, string> = {
-    "Dashboard Report": "/dashboard",
-    "Manage Invite Code": "/invite-code",
-    Products: "/products",
-    "Category & Brands": "/brands",
-    "Manage Stock": "/stock-manage",
-    "Stock Transfer": "/stock-transfer",
-    "Purchase Orders": "/purchase-orders",
-    "Purchase Returns": "/purchase-returns",
-    "Sales Management": "/sales",
-    Stores: "/stores",
-    Warehouses: "/warehouses",
-    Customers: "/customers",
-    Suppliers: "/suppliers",
-    Advanced: "/settings",
-    "General Ledger": "/ledger",
-  };
+   const routeMap: Record<string, string> = {
+      'Dashboard Report': '/dashboard',
+      'Manage Invite Code': '/invite-code',
+      'Products': '/products',
+      'Category & Brands': '/brands',
+      'Manage Stock': '/stock-manage',
+      'Sales Management': '/sales',
+      'Stores': '/stores',
+      'Warehouses': '/warehouses',
+      'Customers': '/customers',
+      'Suppliers': '/suppliers',
+      'Advanced': '/settings',
+      'General Ledger': '/ledger',
+      'Expenses': '/ledger/expenses',
+   }
 
   // Find the section that contains the current route
   function getSectionWithActiveRoute() {

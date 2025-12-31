@@ -237,6 +237,50 @@ export default function Dashboard() {
               </div>
             </div>
           </div>
+          {/* This Month Summary */}
+          <div className="mt-12 bg-white p-8 rounded-3xl border border-indigo-100 shadow-sm">
+            <h3 className="text-xl font-bold text-indigo-900 uppercase tracking-tight mb-6">
+              This Month Performance
+            </h3>
+
+            {(() => {
+              const currentMonth = MONTHLY_PERFORMANCE[MONTHLY_PERFORMANCE.length - 1]
+              const thisMonthProfit = currentMonth.prof25 * 1_000_000
+              const thisMonthTax = thisMonthProfit * 0.123312
+
+              return (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="p-6 bg-indigo-50 rounded-2xl">
+                    <p className="text-[10px] font-bold text-indigo-400 uppercase">
+                      Month
+                    </p>
+                    <p className="text-xl font-bold text-indigo-800">
+                      {currentMonth.month} 2025
+                    </p>
+                  </div>
+
+                  <div className="p-6 bg-emerald-50 rounded-2xl">
+                    <p className="text-[10px] font-bold text-emerald-400 uppercase">
+                      This Month Profit
+                    </p>
+                    <p className="text-2xl font-mono font-bold text-emerald-700">
+                      {thisMonthProfit.toLocaleString()} VND
+                    </p>
+                  </div>
+
+                  <div className="p-6 bg-red-50 rounded-2xl">
+                    <p className="text-[10px] font-bold text-red-400 uppercase">
+                      Estimated Tax
+                    </p>
+                    <p className="text-2xl font-mono font-bold text-red-600">
+                      {thisMonthTax.toLocaleString()} VND
+                    </p>
+                  </div>
+                </div>
+              )
+            })()}
+          </div>
+
         </div>
       </main>
     </div>
