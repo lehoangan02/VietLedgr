@@ -10,7 +10,7 @@ export default function Sidebar() {
 
   const sections = [
     { title: "Main", items: ["Dashboard Report", "Manage Invite Code"] },
-    { title: "Inventory", items: ["Products", "Category & Brands"] },
+    { title: "Inventory", items: ["Products"] },
     {
       title: "Stock & Purchases",
       items: [
@@ -34,8 +34,7 @@ export default function Sidebar() {
       'Dashboard Report': '/dashboard',
       'Manage Invite Code': '/invite-code',
       'Products': '/products',
-      'Category & Brands': '/brands',
-      'Manage Stock': '/stock-manage',
+      'Manage Stock': '/products/manage-stock',
       'Sales Management': '/sales',
       'Stores': '/stores',
       'Warehouses': '/warehouses',
