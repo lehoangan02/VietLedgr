@@ -23,7 +23,7 @@ export default function Sidebar() {
     { title: "Sales", items: ["Sales Management"] },
     {
       title: "Ledger",
-      items: ["General Ledger", "Trial Balance", "Balance Sheet", "Expenses"],
+      items: ["General Ledger", "Trial Balance", "Balance Sheet", "Expenses", "Invest"],
     },
     { title: "Locations", items: ["Stores", "Warehouses"] },
     { title: "Partners", items: ["Customers", "Suppliers"] },
@@ -42,6 +42,7 @@ export default function Sidebar() {
       'Suppliers': '/suppliers',
       'Advanced': '/settings',
       'General Ledger': '/ledger',
+      'Invest': '/ledger/invest',
       'Expenses': '/ledger/expenses',
    }
 
