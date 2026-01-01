@@ -14,7 +14,6 @@ export default function Sidebar() {
     {
       title: "Stock & Purchases",
       items: [
-        "Manage Stock",
         "Stock Transfer",
         "Purchase Orders",
         "Purchase Returns",
@@ -23,7 +22,7 @@ export default function Sidebar() {
     { title: "Sales", items: ["Sales Management"] },
     {
       title: "Ledger",
-      items: ["General Ledger", "Trial Balance", "Balance Sheet", "Expenses", "Invest"],
+      items: ["General Ledger", "Trial Balance", "Balance Sheet", "Expenses", "Invest", "Draw Money"],
     },
     { title: "Locations", items: ["Stores", "Warehouses"] },
     { title: "Partners", items: ["Customers", "Suppliers"] },
@@ -44,6 +43,9 @@ export default function Sidebar() {
       'General Ledger': '/ledger',
       'Invest': '/ledger/invest',
       'Expenses': '/ledger/expenses',
+      'Purchase Returns': '/products/purchase-returns',
+      'Purchase Orders': '/products/purchase-orders',
+      'Draw Money': '/ledger/draw-money',
    }
 
   // Find the section that contains the current route
