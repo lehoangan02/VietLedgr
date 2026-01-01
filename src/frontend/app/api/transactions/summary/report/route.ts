@@ -38,6 +38,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(data, { status: 200 });
   } catch (error) {
+    console.error("[API] Transaction summary error:", error);
     return NextResponse.json({ detail: "Internal Server Error" }, { status: 500 });
   }
 }

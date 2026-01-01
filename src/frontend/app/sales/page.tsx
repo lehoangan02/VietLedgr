@@ -4,6 +4,12 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { ChevronLeft, ChevronRight, Eye, Download, Loader2, AlertCircle, LogIn } from 'lucide-react';
 import Sidebar from '@/components/SideBar';
+import { 
+  Transaction, 
+  TransactionItem, 
+  TransactionListResponse, 
+  TransactionSummary 
+} from '@/lib/fast-api/transactions';
 
 // ============================================================================
 // CONFIGURATION
@@ -11,65 +17,26 @@ import Sidebar from '@/components/SideBar';
 const API_BASE_URL = '/api/transactions';
 
 // ============================================================================
-// INTERFACES
-// ============================================================================
-export interface TransactionItem {
-  item_id: string;
-  batch_id: string;
-  quantity: number;
-  price_at_sale: number;
-  cost_at_sale?: number;
-  created_at?: string;
-  product_name?: string; 
-  batch_number?: string;
-  tax?: number;
-  discount?: number;
-}
-
-export interface Transaction {
-  transaction_id: string;
-  store_id: string;
-  user_id: string;
-  device_id?: string | null;
-  total_amount: number;
-  total_tax?: number;
-  created_at: string;
-  items: TransactionItem[];
-}
-
-export interface TransactionListResponse {
-  items: Transaction[];
-  total: number;
-  page: number;
-  page_size: number;
-  total_pages: number;
-}
-
-export interface TransactionSummary {
-  total_transactions: number;
-  total_amount: number;
-  total_tax: number;
-  total_items: number;
-  average_transaction: number;
-  date_range_start: string;
-  date_range_end: string;
-}
-
-// ============================================================================
 // METRIC CARD COMPONENT
 // ============================================================================
 const MetricCard: React.FC<{ label: string; value: number | string; icon: string }> = ({ label, value, icon }) => {
   const bgColor = icon === '💰' ? 'bg-blue-50' : icon === '📊' ? 'bg-purple-50' : icon === '👥' ? 'bg-green-50' : 'bg-orange-50';
+  
+  // Format value based on label type
+  const formatValue = () => {
+    if (typeof value !== 'number') return value;
+    if (label.includes('Sales') || label.includes('Average')) {
+      return `${Math.round(value).toLocaleString()}$`;
+    }
+    return value.toLocaleString();
+  };
+
   return (
     <div className={`${bgColor} rounded-lg p-6 border border-gray-200`}>
       <div className="flex items-center justify-between">
         <div>
           <p className="text-gray-600 text-sm font-medium">{label}</p>
-          <p className="text-2xl font-bold text-gray-900 mt-2">
-            {typeof value === 'number' 
-              ? (label.includes('Sales') || label.includes('Avg') ? `$${value.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}` : value.toLocaleString()) 
-              : value}
-          </p>
+          <p className="text-2xl font-bold text-gray-900 mt-2">{formatValue()}</p>
         </div>
         <div className="text-4xl">{icon}</div>
       </div>
@@ -136,7 +103,9 @@ export default function SaleListPage() {
       const params = new URLSearchParams({
         page: page.toString(),
         page_size: pageSize.toString(),
-        store_id: filterStore // 🟢 Now matches your login session
+        store_id: filterStore,
+        start_date: startDate,
+        end_date: endDate
       });
 
       const res = await fetch(`${API_BASE_URL}?${params}`);
@@ -150,11 +119,17 @@ export default function SaleListPage() {
       const data = await res.json();
       setSalesData(data);
     } catch (err: any) {
-      setError(err.message === "AUTH_REQUIRED" ? "AUTH_REQUIRED" : err.message);
+      if (err.message === "AUTH_REQUIRED") {
+        setError("AUTH_REQUIRED");
+      } else {
+        console.warn("Failed to fetch transactions:", err.message);
+        // Show empty state instead of error
+        setSalesData({ items: [], total: 0, page: 1, page_size: pageSize, total_pages: 0 });
+      }
     } finally {
       setIsLoading(false);
     }
-  }, [page, pageSize, filterStore]);
+  }, [page, pageSize, filterStore, startDate, endDate]);
 
   const fetchSummary = useCallback(async () => {
     if (!filterStore) return;
@@ -179,7 +154,21 @@ export default function SaleListPage() {
       const data = await res.json();
       setSummaryData(data);
     } catch (err: any) {
-      setError(err.message === "AUTH_REQUIRED" ? "AUTH_REQUIRED" : err.message);
+      if (err.message === "AUTH_REQUIRED") {
+        setError("AUTH_REQUIRED");
+      } else {
+        console.warn("Failed to fetch summary:", err.message);
+        // Show zero values instead of error
+        setSummaryData({
+          total_transactions: 0,
+          total_amount: 0,
+          total_tax: 0,
+          total_items: 0,
+          average_transaction: 0,
+          date_range_start: startDate,
+          date_range_end: endDate,
+        });
+      }
     } finally {
       setIsLoading(false);
     }
@@ -192,21 +181,33 @@ export default function SaleListPage() {
     }
   }, [activeTab, fetchTransactions, fetchSummary, filterStore]);
 
-  // UI calculations
+  // UI calculations - filter by date range on frontend
   const displayItems = useMemo(() => {
-    return salesData.items.flatMap((transaction) =>
-      transaction.items.map((item) => ({
-        ...item,
-        transaction_id: transaction.transaction_id,
-        transaction_date: transaction.created_at,
-        tax: item.tax || (item.price_at_sale * 0.1),
-        discount: item.discount || 0
-      }))
-    );
-  }, [salesData]);
+    const start = new Date(startDate);
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(endDate);
+    end.setHours(23, 59, 59, 999);
 
-  const startIndex = (salesData.page - 1) * salesData.page_size + 1;
-  const endIndex = Math.min(salesData.page * salesData.page_size, salesData.total);
+    return salesData.items
+      .filter((transaction) => {
+        const txDate = new Date(transaction.created_at);
+        return txDate >= start && txDate <= end;
+      })
+      .flatMap((transaction) =>
+        transaction.items.map((item) => ({
+          ...item,
+          transaction_id: transaction.transaction_id,
+          transaction_date: transaction.created_at,
+          tax: item.tax || (item.price_at_sale * 0.1),
+          discount: item.discount || 0
+        }))
+      );
+  }, [salesData, startDate, endDate]);
+
+  // Use filtered count for display
+  const filteredTotal = displayItems.length;
+  const startIndex = filteredTotal === 0 ? 0 : 1;
+  const endIndex = filteredTotal;
 
   // --- Render logic (Loading, Error, Tabs) ---
   if (!filterStore && !error) return (
@@ -234,6 +235,47 @@ export default function SaleListPage() {
       <div className="flex-1 min-h-screen bg-gray-50 p-6">
         <div className="mb-6"><h1 className="text-3xl font-bold text-gray-900">Sales Management</h1></div>
         
+        {/* Date Filters - visible for both tabs */}
+        <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">Filter by Date Range</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Start Date</label>
+              <input
+                type="date"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">End Date</label>
+              <input
+                type="date"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+              />
+            </div>
+            <div>
+              <button
+                onClick={() => activeTab === 'list' ? fetchTransactions() : fetchSummary()}
+                disabled={isLoading}
+                className="w-full px-6 py-2 bg-orange-500 text-white font-semibold rounded-lg hover:bg-orange-600 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Loading...
+                  </>
+                ) : (
+                  'Apply Filter'
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+
         {/* Tab Switcher */}
         <div className="mb-6 border-b border-gray-200">
           <button onClick={() => setActiveTab('list')} className={`px-4 py-2 border-b-2 ${activeTab === 'list' ? 'border-orange-500 text-orange-500' : 'border-transparent'}`}>Sales List</button>
@@ -255,7 +297,13 @@ export default function SaleListPage() {
                      </tr>
                    </thead>
                    <tbody className="divide-y">
-                     {displayItems.map((item, idx) => (
+                     {displayItems.length === 0 ? (
+                       <tr>
+                         <td colSpan={5} className="px-6 py-12 text-center text-gray-500">
+                           No sales recorded yet. Transactions will appear here once created.
+                         </td>
+                       </tr>
+                     ) : displayItems.map((item, idx) => (
                        <tr key={idx} className="hover:bg-gray-50">
                          <td className="px-6 py-4">{new Date(item.transaction_date!).toLocaleDateString()}</td>
                          <td className="px-6 py-4 text-orange-500 font-mono">{item.transaction_id.slice(0,8)}</td>
@@ -270,7 +318,7 @@ export default function SaleListPage() {
              )}
              {/* Pagination */}
              <div className="p-4 border-t flex justify-between items-center text-sm">
-                <span>Showing {startIndex} to {endIndex} of {salesData.total}</span>
+                <span>Showing {filteredTotal} entries </span>
                 <div className="flex gap-2">
                    <button onClick={() => setPage(p => p - 1)} disabled={page === 1} className="px-3 py-1 border rounded disabled:opacity-30">Prev</button>
                    <button onClick={() => setPage(p => p + 1)} disabled={page >= salesData.total_pages} className="px-3 py-1 border rounded disabled:opacity-30">Next</button>
@@ -279,13 +327,66 @@ export default function SaleListPage() {
            </div>
         ) : (
           <div>
-            {isLoading ? <Loader2 className="animate-spin mx-auto" /> : summaryData && (
-              <div className="grid grid-cols-4 gap-4 mb-6">
-                <MetricCard label="Total Sales" value={summaryData.total_amount} icon="💰" />
-                <MetricCard label="Orders" value={summaryData.total_transactions} icon="📊" />
-                <MetricCard label="Items Sold" value={summaryData.total_items} icon="📦" />
-                <MetricCard label="Average" value={summaryData.average_transaction} icon="💵" />
-              </div>
+            {isLoading ? <Loader2 className="animate-spin mx-auto" /> : (
+              <>
+                {/* Metric Cards */}
+                <div className="grid grid-cols-4 gap-4 mb-6">
+                  <MetricCard label="Total Sales" value={`${Math.round(summaryData?.total_amount ?? 0).toLocaleString()}$`} icon="💰" />
+                  <MetricCard label="Orders" value={summaryData?.total_transactions ?? 0} icon="📊" />
+                  <MetricCard label="Items Sold" value={summaryData?.total_items ?? 0} icon="📦" />
+                  <MetricCard label="Average" value={`${Math.round(summaryData?.average_transaction ?? 0).toLocaleString()}$`} icon="💵" />
+                </div>
+
+                {/* Summary Report Table */}
+                <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+                  <div className="p-6 border-b border-gray-200 flex items-center justify-between">
+                    <h2 className="text-xl font-bold text-gray-900">Sales Summary Report</h2>
+                    <div className="flex gap-3">
+                      <button className="p-2 hover:bg-gray-100 rounded-lg transition" title="Download">
+                        <Download size={20} className="text-gray-600" />
+                      </button>
+                    </div>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead className="bg-gray-50 border-b border-gray-200">
+                        <tr>
+                          <th className="px-6 py-3 text-left font-semibold text-gray-700">Metric</th>
+                          <th className="px-6 py-3 text-right font-semibold text-gray-700">Value</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-200">
+                        <tr className="hover:bg-gray-50">
+                          <td className="px-6 py-4 text-gray-900">Date Range</td>
+                          <td className="px-6 py-4 text-right text-gray-700">
+                            {summaryData?.date_range_start ?? startDate} to {summaryData?.date_range_end ?? endDate}
+                          </td>
+                        </tr>
+                        <tr className="hover:bg-gray-50">
+                          <td className="px-6 py-4 text-gray-900">Total Transactions</td>
+                          <td className="px-6 py-4 text-right font-semibold text-gray-900">{summaryData?.total_transactions ?? 0}</td>
+                        </tr>
+                        <tr className="hover:bg-gray-50">
+                          <td className="px-6 py-4 text-gray-900">Total Revenue</td>
+                          <td className="px-6 py-4 text-right font-semibold text-green-600">{Math.round(summaryData?.total_amount ?? 0).toLocaleString()}$</td>
+                        </tr>
+                        <tr className="hover:bg-gray-50">
+                          <td className="px-6 py-4 text-gray-900">Total Tax Collected</td>
+                          <td className="px-6 py-4 text-right font-semibold text-gray-900">{Math.round(summaryData?.total_tax ?? 0).toLocaleString()}$</td>
+                        </tr>
+                        <tr className="hover:bg-gray-50">
+                          <td className="px-6 py-4 text-gray-900">Total Items Sold</td>
+                          <td className="px-6 py-4 text-right font-semibold text-gray-900">{summaryData?.total_items ?? 0}</td>
+                        </tr>
+                        <tr className="hover:bg-gray-50 bg-orange-50">
+                          <td className="px-6 py-4 text-gray-900 font-semibold">Average Transaction Value</td>
+                          <td className="px-6 py-4 text-right font-bold text-orange-600">{Math.round(summaryData?.average_transaction ?? 0).toLocaleString()}$</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </>
             )}
           </div>
         )}
