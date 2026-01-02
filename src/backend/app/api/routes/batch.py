@@ -71,7 +71,11 @@ def get_batches(
     Retrieve multiple batches with pagination
     """
     db_batches = batch.get_batches(db=session, skip=skip, limit=limit)
-    return db_batches
+    total = session.query(Batch).count()
+    return {
+        "items": db_batches,
+        "total": total
+    }
 
 @router.delete("/{batch_id}", response_model=dict)
 def delete_batch(
