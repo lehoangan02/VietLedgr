@@ -62,9 +62,12 @@ def generate_report(
         all_stores.append(all_data)
 
     print(all_stores)
-    # prompt = ai_agent.make_prompt(all_data)
-    # ai_response = ai_agent.get_response(prompt)
-    # code, report = ai_agent.parse_output(ai_response.response_text)
+    prompt = ai_agent.make_prompt(all_data)
+    ai_response = ai_agent.get_response(prompt)
+    code, report = ai_agent.parse_output(ai_response.response_text)
 
-    return all_stores
+    return {
+        "code": code,
+        "report": report
+    }
 
