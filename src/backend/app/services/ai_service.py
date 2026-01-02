@@ -2,7 +2,8 @@ from google import genai
 from app.core.config import settings
 from pydantic import BaseModel
 from typing import Any, Dict, Optional
-
+import os
+import tempfile
 
 
 class AIRequest(BaseModel):
@@ -40,6 +41,8 @@ class AIAgent():
         Use pandas and matplotlib.
         One chart per figure.
         No explanations, no markdown.
+        No plt.show(), no print statements.
+        Save each figure using fig.savefig(...) in the cwd/images/ directory
 
         ### REPORT_TEXT
         Include:
@@ -61,12 +64,39 @@ class AIAgent():
         )
         return AIResponse(response_text=response.text)
     
+    @staticmethod
     def parse_output(text: str):
         code = text.split("### PYTHON_CODE")[1].split("### REPORT_TEXT")[0].strip()
         report = text.split("### REPORT_TEXT")[1].strip()
         return code, report
+    
+    @staticmethod
+    def execute_analysis(code: str):
+        # Create a temporary directory to save images
+        images_dir = os.path.join(os.getcwd(), "images")
+        os.makedirs(images_dir, exist_ok=True)
 
+        # Prepare the execution environment
+        local_vars: Dict[str, Any] = {}
+        exec_globals = {
+            "__builtins__": __builtins__,
+            "pd": __import__("pandas"),
+            "plt": __import__("matplotlib.pyplot"),
+            "os": os,
+        }
 
+        # Change working directory to images directory during execution
+        original_cwd = os.getcwd()
+        os.chdir(images_dir)
+        try:
+            exec(code, exec_globals, local_vars)
+        finally:
+            os.chdir(original_cwd)
+
+        # Collect saved images
+        saved_images = [os.path.join(images_dir, f) for f in os.listdir(images_dir) if f.endswith(('.png', '.jpg', '.jpeg'))]
+        return saved_images
+    
 ai_agent = AIAgent(api_key=settings.GEMINI_API_KEY)
 
 # Example usage
@@ -108,6 +138,8 @@ if __name__ == "__main__":
     Use pandas and matplotlib.
     One chart per figure.
     No explanations, no markdown.
+    No plt.show(), no print statements.
+    Save each figure using fig.savefig(...)
 
     ### REPORT_TEXT
     Include:

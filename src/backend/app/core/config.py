@@ -1,6 +1,6 @@
 import secrets
 from pathlib import Path
-from typing import Annotated, Any, Literal
+from typing import Annotated, Any, Literal, Optional
 
 from pydantic import (AnyUrl, BeforeValidator, EmailStr, HttpUrl, PostgresDsn,
                       computed_field)
