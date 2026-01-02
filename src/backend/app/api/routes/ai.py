@@ -20,6 +20,7 @@ def generate_report(
     session: SessionDep,
     ai_agent: AIAgent = Depends(lambda: AIAgent(api_key=settings.GEMINI_API_KEY))
 ) -> Any:
+    u_id = uuid.UUID("179fbe00-ef57-4f1e-90cc-2f89ef63c7fc")
     user = session.query(User).filter(User.user_id == u_id).first()
     all_stores = []
     # Gather data from the database
