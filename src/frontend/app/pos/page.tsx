@@ -49,6 +49,11 @@ interface Warehouse {
    location: string;
 }
 
+interface Store {
+   store_id: string;
+   name: string;
+}
+
 type CartItem = {
    product: Product
    qty: number
@@ -67,6 +72,22 @@ export default function PosPage() {
 
    const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
    const [selectedWarehouse, setSelectedWarehouse] = useState<string | null>(null);
+
+   const store_id = 'd955be01-fde5-4b26-bf99-fef4454627ac'
+   const [stores, setStores] = useState<Store | null>(null);
+
+   useEffect(() => {
+      const fetchStores = async () => {
+         try {
+            const res = await fetch(`http://localhost:8000/api/stores/${store_id}`);
+            const data = await res.json();
+            setStores(data);
+         } catch (err) {
+            // handle error if needed
+         }
+      };
+      fetchStores();
+   }, []);
 
    useEffect(() => {
       const fetchWarehouses = async () => {
@@ -288,11 +309,13 @@ export default function PosPage() {
                      {filteredProducts.map((p) => (
                         <div key={p.sku} className="bg-white border rounded-lg p-3 hover:shadow cursor-pointer" onClick={() => addToCart(p)}>
                            <div className="h-36 flex items-center justify-center">
-                              <img
-                                 src={p.img ? (p.img.startsWith('http') ? p.img : `data:image/png;base64,${p.img}`) : ''}
-                                 alt={p.name}
-                                 className="max-h-32 object-contain"
-                              />
+                              {p.img && p.img.trim() !== '' && (
+                                 <img
+                                    src={p.img.startsWith('http') ? p.img : `data:image/png;base64,${p.img}`}
+                                    alt={p.name}
+                                    className="max-h-32 object-contain"
+                                 />
+                              )}
                            </div>
                            <div className="mt-3">
                               <div className="text-sm font-medium text-gray-800">{p.name}</div>
@@ -311,7 +334,7 @@ export default function PosPage() {
                   <div className="bg-white border rounded-lg shadow p-4 mt-4 flex flex-col h-screen">
                      {/* header */}
                      <div>
-                        <h3 className="font-semibold text-lg">Order List</h3>
+                        <h3 className="font-semibold text-lg">Order List - {stores ? stores.name : ''}</h3>
                         <div className="text-xs text-gray-400 mb-3">Id : #0</div>
                      </div>
 
