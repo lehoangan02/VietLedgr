@@ -6,7 +6,7 @@ import { Eye, Edit3, Trash2, Loader2, Search, Package, AlertCircle } from 'lucid
 import { useRouter } from 'next/navigation'
 
 type Product = {
-   product_id: string 
+   product_id: string
    sku: string
    name: string
    img?: string | StaticImageData
@@ -37,17 +37,21 @@ export default function ProductTable({
    warehouses: warehousesProp = []
 }: ProductTableProps) {
    const router = useRouter()
-   
+
    const [products, setProducts] = useState<Product[]>(productsProp)
    const [warehouses, setWarehouses] = useState<Warehouse[]>(warehousesProp)
    const [isLoading, setIsLoading] = useState(productsProp.length === 0)
    const [error, setError] = useState<string | null>(null)
-   
+
    const [page, setPage] = useState<number>(1)
    const pageSize = 10
    const [query, setQuery] = useState('')
    const [category, setCategory] = useState<string | null>(null)
    const [selectedWarehouse, setSelectedWarehouse] = useState<string | null>(null)
+   // Import status state
+   const [importStatus, setImportStatus] = useState<string>('')
+   const [importProgress, setImportProgress] = useState<number>(0)
+   const [importErrors, setImportErrors] = useState<string[]>([])
 
    // Fetch products if not provided via props
    useEffect(() => {
@@ -99,16 +103,16 @@ export default function ProductTable({
       }
    }
 
-   const categories = useMemo(() => 
-      Array.from(new Set(products.map((p) => p.retail_category).filter(Boolean) as string[])), 
-   [products])
+   const categories = useMemo(() =>
+      Array.from(new Set(products.map((p) => p.retail_category).filter(Boolean) as string[])),
+      [products])
 
    const filteredProducts = useMemo(() => {
       return products.filter((p) => {
          const matchesWarehouse = !selectedWarehouse || p.warehouse_id === selectedWarehouse
          const matchesCategory = !category || p.retail_category === category
-         const matchesSearch = !query || 
-            p.name.toLowerCase().includes(query.toLowerCase()) || 
+         const matchesSearch = !query ||
+            p.name.toLowerCase().includes(query.toLowerCase()) ||
             p.sku.toLowerCase().includes(query.toLowerCase())
          return matchesWarehouse && matchesCategory && matchesSearch
       })
@@ -144,7 +148,97 @@ export default function ProductTable({
 
    return (
       <div className="bg-white rounded-lg shadow p-6 border border-gray-100">
-         {/* Filter/Search Bar omitted for brevity */}
+         {/* Top bar: Filters and Actions */}
+         <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
+            {/* Filters */}
+            <div className="flex flex-wrap items-center gap-3">
+               {/* Search */}
+               <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 1010.5 18.5a7.5 7.5 0 006.15-1.85z" />
+                     </svg>
+                  </span>
+                  <input
+                     value={query}
+                     onChange={(e) => setQuery(e.target.value)}
+                     placeholder="Search product code or name..."
+                     className="border rounded px-4 py-2 pl-10 w-64"
+                  />
+               </div>
+               {/* Warehouse Dropdown */}
+               <div>
+                  <select
+                     className="border rounded px-3 py-2 w-48"
+                     value={selectedWarehouse ?? ''}
+                     onChange={e => setSelectedWarehouse(e.target.value)}
+                  >
+                     <option value="">All Warehouses</option>
+                     {warehouses.map(wh => (
+                        <option key={wh.warehouse_id} value={wh.warehouse_id}>{wh.name}</option>
+                     ))}
+                  </select>
+               </div>
+               {/* Category Filter */}
+               <div className="flex items-center gap-1">
+                  <button
+                     onClick={() => setCategory(null)}
+                     className={`px-3 py-2 rounded ${category === null ? 'bg-orange-500 text-white' : 'bg-white border'}`}
+                  >
+                     All Categories
+                  </button>
+                  {categories.map((c) => (
+                     <button
+                        key={c}
+                        onClick={() => setCategory((prev) => (prev === c ? null : c))}
+                        className={`px-3 py-2 rounded ${category === c ? 'bg-orange-500 text-white' : 'bg-white border'}`}
+                     >
+                        {c}
+                     </button>
+                  ))}
+               </div>
+            </div>
+            {/* Actions */}
+            <div className="flex items-center gap-3">
+               {/* Import Product Button and File Input */}
+               <input
+                  type="file"
+                  accept=".csv"
+                  id="import-product-csv"
+                  style={{ display: 'none' }}
+                  onChange={async (e) => {
+                     const file = e.target.files?.[0]
+                     if (!file) return
+                     setImportStatus('Importing...')
+                     setImportProgress(0)
+                     try {
+                        const { importProductsFromCsv } = await import('../utils/importProductsFromCsv')
+                        const result = await importProductsFromCsv(file, (cur, total) => {
+                           setImportProgress(Math.round((cur / total) * 100))
+                        })
+                        setImportStatus(`Imported: ${result.success}, Failed: ${result.failed}`)
+                        if (result.errors.length > 0) {
+                           setImportErrors(result.errors)
+                        } else {
+                           setImportErrors([])
+                        }
+                     } catch (err) {
+                        setImportStatus('Import failed')
+                        setImportErrors([(err as Error).message])
+                     }
+                  }}
+               />
+               <button
+                  className="text-sm px-3 py-2 rounded border bg-white"
+                  onClick={() => document.getElementById('import-product-csv')?.click()}
+                  type="button">
+                  Import Product
+               </button>
+               <button onClick={() => router.push('/products/add-product')} className="text-sm px-3 py-2 rounded bg-orange-500 text-white">Add Product</button>
+            </div>
+         </div>
+
+         {/* Product Table */}
          <div className="overflow-x-auto">
             <table className="w-full table-auto text-sm">
                <thead>
@@ -166,18 +260,18 @@ export default function ProductTable({
                            <div className="flex items-center gap-4">
                               <div className="w-11 h-11 flex-shrink-0 bg-gray-100 rounded-lg flex items-center justify-center overflow-hidden">
                                  {p.image_base64 ? (
-                                    <img 
-                                       src={`data:image/png;base64,${p.image_base64}`} 
-                                       alt={p.name} 
-                                       className="w-full h-full object-cover" 
+                                    <img
+                                       src={`data:image/png;base64,${p.image_base64}`}
+                                       alt={p.name}
+                                       className="w-full h-full object-cover"
                                     />
                                  ) : (
                                     <Package className="text-gray-300" size={20} />
                                  )}
                               </div>
                               <div>
-                                 <div className="font-semibold text-gray-800">{p.name}</div>
-                                 <div className="text-xs text-gray-400 font-mono uppercase tracking-wider">{p.sku}</div>
+                                 <div className="font-medium text-gray-800">{p.name}</div>
+                                 <div className="text-xs text-gray-400">{p.product_id}</div>
                               </div>
                            </div>
                         </td>
@@ -191,9 +285,9 @@ export default function ProductTable({
                            <div className="flex flex-col gap-1">
                               <span className="text-gray-700 font-medium">{p.qty} {p.unit || 'Pcs'}</span>
                               <div className="w-24 h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                                 <div 
-                                    className={`h-full ${Number(p.qty) < 20 ? 'bg-red-500' : 'bg-green-500'}`} 
-                                    style={{ width: `${Math.min(100, (Number(p.qty) / 100) * 100)}%` }} 
+                                 <div
+                                    className={`h-full ${Number(p.qty) < 20 ? 'bg-red-500' : 'bg-green-500'}`}
+                                    style={{ width: `${Math.min(100, (Number(p.qty) / 100) * 100)}%` }}
                                  />
                               </div>
                            </div>
@@ -219,8 +313,8 @@ export default function ProductTable({
                               >
                                  <Edit3 size={16} />
                               </button>
-                              <button 
-                                 title="Delete" 
+                              <button
+                                 title="Delete"
                                  onClick={() => handleDelete(p.product_id)}
                                  className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md"
                               >
@@ -239,7 +333,71 @@ export default function ProductTable({
                </tbody>
             </table>
          </div>
-         {/* Pagination Controls omitted for brevity */}
+
+         {/* Import status and errors */}
+         {importStatus && (
+            <div className="mt-4 text-sm">
+               <div className="font-medium">{importStatus} {importProgress > 0 && importProgress < 100 ? `(${importProgress}%)` : ''}</div>
+               {importErrors.length > 0 && (
+                  <div className="mt-2 text-red-500">
+                     <div>Errors:</div>
+                     <ul className="list-disc ml-6">
+                        {importErrors.map((err, idx) => <li key={idx}>{err}</li>)}
+                     </ul>
+                  </div>
+               )}
+            </div>
+         )}
+
+         {/* Pagination */}
+         <div className="flex items-center justify-between mt-4 text-sm text-gray-500">
+            <div>
+               Showing {(page - 1) * pageSize + 1} to {Math.min(page * pageSize, filteredProducts.length)} of {filteredProducts.length} entries
+            </div>
+            <div className="flex items-center gap-2">
+               <button
+                  onClick={() => goto(1)}
+                  disabled={page === 1}
+                  className="px-3 py-1 rounded border disabled:opacity-50"
+               >
+                  First
+               </button>
+               <button
+                  onClick={() => goto(page - 1)}
+                  disabled={page === 1}
+                  className="px-3 py-1 rounded border disabled:opacity-50"
+               >
+                  Prev
+               </button>
+               <div className="px-2">
+                  {Array.from({ length: Math.max(1, Math.ceil(filteredProducts.length / pageSize)) }).map((_, idx) => {
+                     const p = idx + 1
+                     return (
+                        <button
+                           key={p}
+                           onClick={() => goto(p)}
+                           className={`mx-1 px-3 py-1 rounded ${p === page ? 'bg-orange-500 text-white' : 'border'}`}
+                        >
+                           {p}
+                        </button>
+                     )
+                  })}
+               </div>
+               <button
+                  onClick={() => goto(page + 1)}
+                  disabled={page === Math.max(1, Math.ceil(filteredProducts.length / pageSize))}
+                  className="px-3 py-1 rounded border disabled:opacity-50"
+               >
+                  Next
+               </button>
+               <button
+                  onClick={() => goto(Math.max(1, Math.ceil(filteredProducts.length / pageSize)))}
+                  disabled={page === Math.max(1, Math.ceil(filteredProducts.length / pageSize))}
+                  className="px-3 py-1 rounded border disabled:opacity-50">
+                  Last
+               </button>
+            </div>
+         </div>
       </div>
    )
 }

@@ -72,7 +72,7 @@ export default function Inventory() {
             const res = await fetch('http://localhost:8000/api/products/')
             const data = await res.json()
             setProductsInfo(Array.isArray(data) ? data : (data.items ?? []))
-         } catch (err) {}
+         } catch (err) { }
       }
       fetchProducts()
    }, [])
@@ -83,7 +83,7 @@ export default function Inventory() {
             const res = await fetch('http://localhost:8000/api/warehouses/')
             const data = await res.json()
             setWarehouses(Array.isArray(data) ? data : (data.items ?? []))
-         } catch (err) {}
+         } catch (err) { }
       }
       fetchWarehouses()
    }, [])
