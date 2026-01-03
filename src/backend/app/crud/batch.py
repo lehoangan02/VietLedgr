@@ -46,9 +46,10 @@ def get_batch_by_id(
         batch_id: uuid.UUID
 ) -> models.Batch:
     """
-    Retrieve a batch by id
+    Retrieve a batch by batch_id
     """
-    return db.query(models.Batch).filter(models.Batch.id == batch_id).first()
+    # 🟢 FIX: Change .id to .batch_id
+    return db.query(models.Batch).filter(models.Batch.batch_id == batch_id).first()
 
 
 def get_batches(

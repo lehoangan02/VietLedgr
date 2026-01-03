@@ -2,3 +2,5 @@
 /src/backend/macEnv
 /src/backend/myenv
 /src/backend/node_modules
+src/backend/app/alembic/env.py
+src/backend/app/alembic/README

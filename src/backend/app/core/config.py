@@ -1,6 +1,6 @@
 import secrets
 from pathlib import Path
-from typing import Annotated, Any, Literal
+from typing import Annotated, Any, Literal, Optional
 
 from pydantic import (AnyUrl, BeforeValidator, EmailStr, HttpUrl, PostgresDsn,
                       computed_field)
@@ -21,6 +21,8 @@ class Settings(BaseSettings):
         env_file_encoding="utf-8",
         extra="ignore",
     )
+
+    GEMINI_API_KEY: Optional[str] = None
 
     API_STR: str = "/api"
     SECRET_KEY: str = secrets.token_urlsafe(32)
