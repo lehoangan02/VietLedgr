@@ -94,11 +94,16 @@ def generate_report(
     prompt = ai_agent.make_prompt(all_stores)
     ai_response = ai_agent.get_response(prompt)
     code, report = ai_agent.parse_output(ai_response.response_text)
-    images = ai_agent.execute_analysis(code)
-
+    print("Generated Code:", code)
+    try:
+        images = ai_agent.execute_analysis(code)
+    except Exception as e:
+        print("Error executing analysis code:", e)
+        images = []
+    
     return {
         "code": code,
-        "images": images,
+        "images": images if images else [],
         "report": report
     }
 
