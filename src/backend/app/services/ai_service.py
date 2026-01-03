@@ -4,6 +4,9 @@ from pydantic import BaseModel
 from typing import Any, Dict, Optional
 import os
 import tempfile
+import re
+import base64
+import shutil
 
 
 class AIRequest(BaseModel):
@@ -51,12 +54,9 @@ class AIAgent():
         - Executive summary (4–5 sentences)
         - 5 actionable recommendations
 
-        Use clear headings and bullet points. The Python code must be executable without modification.
+        Use clear headings and bullet points for titles, sections and paragraphs. The Python code must be executable without modification.
         """
         return AIRequest(prompt=prompt)
-
-
-        # pass  # Implementation of prompt creation based on data
 
     def get_response(self, request: AIRequest) -> AIResponse:
         response = self.client.models.generate_content(
@@ -66,17 +66,43 @@ class AIAgent():
     
     @staticmethod
     def parse_output(text: str):
-        code = text.split("### PYTHON_CODE")[1].split("### REPORT_TEXT")[0].strip()
-        report = text.split("### REPORT_TEXT")[1].strip()
+        # Extract sections robustly and clean common fencing/triple-quote wrappers
+        try:
+            parts = text.split("### PYTHON_CODE")
+            after_code = parts[1]
+            code_part, report_part = after_code.split("### REPORT_TEXT")
+        except Exception:
+            # Fallback: try to locate markers more permissively
+            try:
+                code_part = text.split("### PYTHON_CODE")[1]
+                report_part = text.split("### REPORT_TEXT")[1]
+            except Exception:
+                return text, ""
+
+        def clean_code_block(s: str) -> str:
+            s = s.strip()
+            # remove fenced code blocks ``` or ```python
+            s = re.sub(r"^```(?:python|py)?\n", "", s, flags=re.IGNORECASE)
+            s = re.sub(r"\n```$", "", s)
+            # remove surrounding triple quotes
+            if s.startswith('"""') and s.endswith('"""'):
+                s = s[3:-3]
+            if s.startswith("'''") and s.endswith("'''"):
+                s = s[3:-3]
+            return s.strip()
+
+        code = clean_code_block(code_part)
+        report = clean_code_block(report_part)
         return code, report
     
     @staticmethod
     def execute_analysis(code: str):
-        # Create a temporary directory to save images
-        images_dir = os.path.join(os.getcwd(), "images")
-        os.makedirs(images_dir, exist_ok=True)
+        # Execute the generated code inside a fresh temporary workspace so that
+        # any relative paths (e.g. output_dir = 'images') resolve inside it.
+        temp_dir = tempfile.mkdtemp(prefix="ai_exec_")
+        original_cwd = os.getcwd()
 
-        # Prepare the execution environment
+        # Prepare execution environment with common libs available
         local_vars: Dict[str, Any] = {}
         exec_globals = {
             "__builtins__": __builtins__,
@@ -85,17 +111,34 @@ class AIAgent():
             "os": os,
         }
 
-        # Change working directory to images directory during execution
-        original_cwd = os.getcwd()
-        os.chdir(images_dir)
         try:
+            os.chdir(temp_dir)
+            # Run the code
             exec(code, exec_globals, local_vars)
+
+            # Look for images inside the temp workspace (commonly under ./images)
+            images_dir = os.path.join(temp_dir, "images")
+            saved_images = []
+            if os.path.isdir(images_dir):
+                for f in os.listdir(images_dir):
+                    if f.lower().endswith(('.png', '.jpg', '.jpeg')):
+                        saved_images.append(os.path.join(images_dir, f))
+
+            # Read and return base64-encoded image data (without data URI prefix)
+            encoded = []
+            for p in saved_images:
+                with open(p, 'rb') as fh:
+                    b = fh.read()
+                encoded.append(base64.b64encode(b).decode('ascii'))
+
+            return encoded
         finally:
             os.chdir(original_cwd)
-
-        # Collect saved images
-        saved_images = [os.path.join(images_dir, f) for f in os.listdir(images_dir) if f.endswith(('.png', '.jpg', '.jpeg'))]
-        return saved_images
+            # cleanup temp dir
+            try:
+                shutil.rmtree(temp_dir)
+            except Exception:
+                pass
     
 ai_agent = AIAgent(api_key=settings.GEMINI_API_KEY)
 
@@ -148,7 +191,7 @@ if __name__ == "__main__":
     - Executive summary (4–5 sentences)
     - 5 actionable recommendations
 
-    Use clear headings and bullet points. The Python code must be executable without modification.
+    Use clear headings and bullet points between titles, sections, and paragraphs. The Python code must be executable without modification.
     """
 
 

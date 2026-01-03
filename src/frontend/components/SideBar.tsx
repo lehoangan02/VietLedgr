@@ -26,6 +26,7 @@ export default function Sidebar() {
     },
     { title: "Locations", items: ["Stores", "Warehouses"] },
     { title: "Partners", items: ["Customers", "Suppliers"] },
+    { title: "AI", items: ["Generate Report"] },
     { title: "Settings", items: ["Advanced"] },
   ];
 
@@ -46,6 +47,7 @@ export default function Sidebar() {
       'Purchase Returns': '/products/purchase-returns',
       'Purchase Orders': '/products/purchase-orders',
       'Draw Money': '/ledger/draw-money',
+      'Generate Report': '/ai',
    }
 
   // Find the section that contains the current route
