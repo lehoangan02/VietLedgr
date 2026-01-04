@@ -1,26 +1,18 @@
 import uuid
 from datetime import datetime
 from decimal import Decimal
-from sqlalchemy import (
-    UUID,
-    TIMESTAMP,
-    CheckConstraint,
-    ForeignKey,
-    Index,
-    Integer,
-    Numeric,
-    String,
-    Text,
-    text,
-)
-from sqlalchemy.orm import Mapped, mapped_column, relationship
 from typing import TYPE_CHECKING
+
+from sqlalchemy import (TIMESTAMP, UUID, CheckConstraint, ForeignKey, Index,
+                        Integer, Numeric, String, Text, text)
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .base import Base
 
 if TYPE_CHECKING:
-    from .store import Store
     from .product import Product
+    from .store import Store
+    from .supplier import Supplier
     from .transaction import TransactionItem
 
 
@@ -69,7 +61,9 @@ class Batch(Base):
         nullable=False,
     )
 
-    stock: Mapped[int] = mapped_column(Integer, nullable=False, server_default=text("0"))
+    stock: Mapped[int] = mapped_column(
+        Integer, nullable=False, server_default=text("0")
+    )
     cost: Mapped[Decimal] = mapped_column(Numeric(15, 2), nullable=False)
     sale_price: Mapped[Decimal] = mapped_column(Numeric(15, 2), nullable=False)
 
@@ -82,8 +76,12 @@ class Batch(Base):
         TIMESTAMP(timezone=True),
         nullable=True,
     )
-    supplier_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
 
+    supplier_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("suppliers.id", ondelete="CASCADE"),
+        nullable=False,
+    )
     created_at: Mapped[datetime] = mapped_column(
         TIMESTAMP(timezone=True),
         nullable=False,
@@ -94,10 +92,12 @@ class Batch(Base):
         nullable=False,
         server_default=text("CURRENT_TIMESTAMP"),
     )
-
+    supplier: Mapped["Supplier"] = relationship("Supplier", back_populates="suppliers")
     product: Mapped["Product"] = relationship("Product", back_populates="batches")
     warehouse: Mapped["Warehouse"] = relationship("Warehouse", back_populates="batches")
-    transaction_items: Mapped[list["TransactionItem"]] = relationship("TransactionItem", back_populates="batch")
+    transaction_items: Mapped[list["TransactionItem"]] = relationship(
+        "TransactionItem", back_populates="batch"
+    )
 
     __table_args__ = (
         CheckConstraint("stock >= 0", name="batches_stock_check"),
