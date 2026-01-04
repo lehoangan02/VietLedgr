@@ -1,8 +1,11 @@
-from app.api.routes import auth, user, product, store, warehouse, batch, expenses, ledger, transactions, invite_codes, ai
+from app.api.routes import (ai, auth, batch, expenses, invite_codes, ledger,
+                            product, store, supplier, transactions, user,
+                            warehouse)
 from fastapi import APIRouter
 
 api_router = APIRouter()
 
+api_router.include_router(supplier.router)
 api_router.include_router(auth.router)
 api_router.include_router(user.router)
 api_router.include_router(product.router)

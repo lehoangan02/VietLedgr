@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime
+from os import wait
 from typing import TYPE_CHECKING
 
 from sqlalchemy import TIMESTAMP, UUID, String, text
@@ -34,5 +35,4 @@ class Supplier(Base):
         nullable=False,
         server_default=text("CURRENT_TIMESTAMP"),
     )
-
     batches: Mapped[list["Batch"]] = relationship("Batch", back_populates="supplier")

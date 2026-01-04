@@ -92,12 +92,16 @@ class Batch(Base):
         nullable=False,
         server_default=text("CURRENT_TIMESTAMP"),
     )
-    supplier: Mapped["Supplier"] = relationship("Supplier", back_populates="suppliers")
+    supplier: Mapped["Supplier"] = relationship("Supplier", back_populates="batches")
     product: Mapped["Product"] = relationship("Product", back_populates="batches")
     warehouse: Mapped["Warehouse"] = relationship("Warehouse", back_populates="batches")
     transaction_items: Mapped[list["TransactionItem"]] = relationship(
         "TransactionItem", back_populates="batch"
     )
+
+    @property
+    def supplier_name(self) -> str | None:
+        return self.supplier.name if self.supplier else None
 
     __table_args__ = (
         CheckConstraint("stock >= 0", name="batches_stock_check"),
