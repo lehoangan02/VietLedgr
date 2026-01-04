@@ -2,13 +2,13 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import Sidebar from '@/components/SideBar';
-import { 
-  Loader2, 
-  Package, 
-  AlertCircle, 
-  Plus, 
-  Search, 
-  TrendingUp, 
+import {
+  Loader2,
+  Package,
+  AlertCircle,
+  Plus,
+  Search,
+  TrendingUp,
   Calendar,
   User
 } from 'lucide-react';
@@ -26,6 +26,8 @@ interface Batch {
   profit_margin_percent: number;
 }
 
+const FASTAPI_URL = process.env.FASTAPI_URL || "http://localhost:8000";
+
 export default function PurchaseOrdersPage() {
   const [batches, setBatches] = useState<Batch[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -35,10 +37,10 @@ export default function PurchaseOrdersPage() {
   const fetchBatches = async () => {
     setIsLoading(true);
     try {
-      const res = await fetch('http://localhost:8000/api/batches/');
+      const res = await fetch(`${FASTAPI_URL}/api/batches/`);
       if (!res.ok) throw new Error('Failed to fetch purchase batches.');
       const data = await res.json();
-      
+
       // Handle direct list response from FastAPI list[BatchResponse]
       setBatches(Array.isArray(data) ? data : []);
     } catch (err: any) {
@@ -53,8 +55,8 @@ export default function PurchaseOrdersPage() {
   }, []);
 
   const filteredBatches = useMemo(() => {
-    return batches.filter(b => 
-      !query || 
+    return batches.filter(b =>
+      !query ||
       b.supplier_name?.toLowerCase().includes(query.toLowerCase()) ||
       b.batch_id.toLowerCase().includes(query.toLowerCase())
     );
@@ -102,7 +104,7 @@ export default function PurchaseOrdersPage() {
           <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
             <span className="text-[10px] font-bold text-green-500 uppercase tracking-widest">Avg. Profit Margin</span>
             <div className="text-2xl font-black text-gray-900 mt-1">
-               {batches.length > 0 ? (batches.reduce((a, b) => a + b.profit_margin_percent, 0) / batches.length).toFixed(1) : 0}%
+              {batches.length > 0 ? (batches.reduce((a, b) => a + b.profit_margin_percent, 0) / batches.length).toFixed(1) : 0}%
             </div>
           </div>
         </div>
@@ -112,8 +114,8 @@ export default function PurchaseOrdersPage() {
           <div className="p-6 border-b border-gray-50 flex justify-between items-center">
             <div className="relative w-96">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-              <input 
-                type="text" 
+              <input
+                type="text"
                 placeholder="Search by supplier or Batch ID..."
                 className="w-full pl-11 pr-4 py-3 bg-gray-50 border-none rounded-2xl text-sm focus:ring-2 focus:ring-blue-100 outline-none transition-all"
                 value={query}
@@ -170,9 +172,8 @@ export default function PurchaseOrdersPage() {
                     </div>
                   </td>
                   <td className="py-5 pr-8 text-right">
-                    <span className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest ${
-                      batch.stock > 0 ? 'bg-green-50 text-green-600' : 'bg-gray-100 text-gray-400'
-                    }`}>
+                    <span className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest ${batch.stock > 0 ? 'bg-green-50 text-green-600' : 'bg-gray-100 text-gray-400'
+                      }`}>
                       {batch.stock > 0 ? 'In Stock' : 'Depleted'}
                     </span>
                   </td>

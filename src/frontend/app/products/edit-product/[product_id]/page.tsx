@@ -28,14 +28,16 @@ export default function EditProductPage() {
    const fileInputRef = React.useRef<HTMLInputElement>(null)
    const [warehousesList, setWarehousesList] = useState<{ warehouse_id: string, name: string }[]>([]);
 
+   const FASTAPI_URL = process.env.FASTAPI_URL || "http://localhost:8000";
+
    useEffect(() => {
-      fetch('http://localhost:8000/api/warehouses/')
+      fetch(`${FASTAPI_URL}/api/warehouses/`)
          .then(res => res.json())
          .then(data => setWarehousesList(Array.isArray(data) ? data : (data.items ?? [])))
    }, [])
 
    useEffect(() => {
-      fetch(`http://localhost:8000/api/products/${productId}`)
+      fetch(`${FASTAPI_URL}/api/products/${productId}`)
          .then(res => res.json())
          .then(async data => {
             setName(data.name || '')
@@ -45,7 +47,7 @@ export default function EditProductPage() {
             setStore(data.store_id || '')
             setImageBase64(data.image_base64 || '')
             if (data.store_id) {
-               const storeRes = await fetch(`http://localhost:8000/api/stores/${data.store_id}`)
+               const storeRes = await fetch(`${FASTAPI_URL}/api/stores/${data.store_id}`)
                if (storeRes.ok) {
                   const storeData = await storeRes.json()
                   setStoreName(storeData.name || '')
@@ -53,7 +55,7 @@ export default function EditProductPage() {
             }
             if (data.warehouse_id) {
                // setWarehouse(data.warehouse_id)
-               const warehouseRes = await fetch(`http://localhost:8000/api/warehouses/${data.warehouse_id}`)
+               const warehouseRes = await fetch(`${FASTAPI_URL}/api/warehouses/${data.warehouse_id}`)
                if (warehouseRes.ok) {
                   const warehouseData = await warehouseRes.json()
                   setWarehouse(warehouseData.name || '')
@@ -99,7 +101,7 @@ export default function EditProductPage() {
          // category_id and store_id may be needed depending on backend
       }
       try {
-         const productRes = await fetch(`http://localhost:8000/api/products/${productId}`, {
+         const productRes = await fetch(`${FASTAPI_URL}/api/products/${productId}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(productPayload)

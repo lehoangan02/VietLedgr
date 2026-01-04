@@ -14,6 +14,7 @@ export default function EditProductPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const productId = searchParams.get('id');
+  const FASTAPI_URL = process.env.FASTAPI_URL || "http://localhost:8000";
 
   const [formData, setFormData] = useState<FormData>({
     name: '',
@@ -37,7 +38,7 @@ export default function EditProductPage() {
     const fetchProduct = async () => {
       try {
         setLoading(true);
-        const res = await fetch(`http://localhost:8000/api/products/${productId}`);
+        const res = await fetch(`${FASTAPI_URL}/api/products/${productId}`);
         if (!res.ok) {
           const errData = await res.json().catch(() => ({}));
           throw new Error(errData.detail || 'Failed to fetch product');
@@ -68,7 +69,7 @@ export default function EditProductPage() {
 
     setIsSaving(true);
     try {
-      const res = await fetch(`http://localhost:8000/api/products/${productId}`, {
+      const res = await fetch(`${FASTAPI_URL}/api/products/${productId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
@@ -156,9 +157,8 @@ export default function EditProductPage() {
             <button
               type="submit"
               disabled={isSaving}
-              className={`flex-1 text-white py-4 rounded-xl font-bold transition shadow-lg active:scale-95 ${
-                isSaving ? 'bg-orange-300 cursor-not-allowed' : 'bg-orange-500 hover:bg-orange-600 shadow-orange-100'
-              }`}
+              className={`flex-1 text-white py-4 rounded-xl font-bold transition shadow-lg active:scale-95 ${isSaving ? 'bg-orange-300 cursor-not-allowed' : 'bg-orange-500 hover:bg-orange-600 shadow-orange-100'
+                }`}
             >
               {isSaving ? 'Saving...' : 'Save Changes'}
             </button>

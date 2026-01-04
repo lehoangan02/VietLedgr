@@ -8,7 +8,7 @@ import Sidebar from '@/components/SideBar'
 
 // --- Types ---
 type Product = {
-   product_id: string 
+   product_id: string
    sku: string
    name: string
    img?: string | StaticImageData
@@ -25,24 +25,25 @@ type Product = {
 
 export default function ManageStockPage() {
    const router = useRouter()
-   
+
    // --- State ---
    const [products, setProducts] = useState<Product[]>([])
    const [isLoading, setIsLoading] = useState(true)
    const [error, setError] = useState<string | null>(null)
-   
+
    const [page, setPage] = useState<number>(1)
    const [query, setQuery] = useState('')
    const pageSize = 10
+   const FASTAPI_URL = process.env.FASTAPI_URL || "http://localhost:8000";
 
    // --- Fetch Data ---
    useEffect(() => {
       const fetchProducts = async () => {
          setIsLoading(true);
          try {
-            const res = await fetch('http://localhost:8000/api/products/')
+            const res = await fetch(`${FASTAPI_URL}/api/products/`);
             if (!res.ok) throw new Error('Failed to fetch inventory.')
-            
+
             let data = await res.json()
 
             // Randomize expected runout for demonstration purposes
@@ -70,9 +71,9 @@ export default function ManageStockPage() {
 
    // --- Filtering & Sorting (Lowest Stock First) ---
    const processedProducts = useMemo(() => {
-      const filtered = products.filter((p) => 
-         !query || 
-         p.name.toLowerCase().includes(query.toLowerCase()) || 
+      const filtered = products.filter((p) =>
+         !query ||
+         p.name.toLowerCase().includes(query.toLowerCase()) ||
          p.sku.toLowerCase().includes(query.toLowerCase())
       )
       return filtered.sort((a, b) => Number(a.qty) - Number(b.qty))
@@ -110,9 +111,9 @@ export default function ManageStockPage() {
                   <p className="text-sm text-gray-500">Prioritized by lowest availability</p>
                </div>
                <div className="relative">
-                  <input 
-                     type="text" 
-                     placeholder="Search inventory..." 
+                  <input
+                     type="text"
+                     placeholder="Search inventory..."
                      className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-orange-100 outline-none w-72 transition-all"
                      value={query}
                      onChange={(e) => {
@@ -163,7 +164,7 @@ export default function ManageStockPage() {
                                     {p.retail_category || 'General'}
                                  </span>
                               </td>
-                              
+
                               <td className="py-5">
                                  <div className="max-w-[140px]">
                                     <div className="flex justify-between mb-1.5">
@@ -172,9 +173,9 @@ export default function ManageStockPage() {
                                        </span>
                                     </div>
                                     <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                                       <div 
-                                          className={`h-full transition-all duration-500 ${isCritical ? 'bg-red-500' : 'bg-green-500'}`} 
-                                          style={{ width: `${Math.min(100, (Number(p.qty) / 100) * 100)}%` }} 
+                                       <div
+                                          className={`h-full transition-all duration-500 ${isCritical ? 'bg-red-500' : 'bg-green-500'}`}
+                                          style={{ width: `${Math.min(100, (Number(p.qty) / 100) * 100)}%` }}
                                        />
                                     </div>
                                  </div>
@@ -182,9 +183,9 @@ export default function ManageStockPage() {
 
                               <td className="py-5">
                                  <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold 
-                                    ${days <= 7 ? 'bg-red-50 text-red-600' : 
-                                      days <= 14 ? 'bg-orange-50 text-orange-600' : 
-                                      'bg-blue-50 text-blue-600'}`}
+                                    ${days <= 7 ? 'bg-red-50 text-red-600' :
+                                       days <= 14 ? 'bg-orange-50 text-orange-600' :
+                                          'bg-blue-50 text-blue-600'}`}
                                  >
                                     {days <= 14 && <AlertCircle size={12} />}
                                     {days} Days Left
@@ -203,7 +204,7 @@ export default function ManageStockPage() {
                                        onClick={() => handleRequestRefill(p)}
                                        className="flex items-center gap-2 px-4 py-2 bg-orange-500 text-white rounded-lg text-xs font-bold hover:bg-orange-600 transition-all shadow-md shadow-orange-100"
                                     >
-                                       <Truck size={14} /> 
+                                       <Truck size={14} />
                                        Refill
                                     </button>
                                  </div>
@@ -223,15 +224,15 @@ export default function ManageStockPage() {
             <div className="p-6 bg-gray-50/50 border-t border-gray-100 flex items-center justify-between">
                <p className="text-xs text-gray-400 font-medium">Page {page} of {totalPages}</p>
                <div className="flex gap-2">
-                  <button 
-                     onClick={() => setPage(p => Math.max(1, p - 1))} 
+                  <button
+                     onClick={() => setPage(p => Math.max(1, p - 1))}
                      disabled={page === 1}
                      className="px-4 py-2 text-xs font-bold bg-white border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-50 transition-colors"
                   >
                      Previous
                   </button>
-                  <button 
-                     onClick={() => setPage(p => Math.min(totalPages, p + 1))} 
+                  <button
+                     onClick={() => setPage(p => Math.min(totalPages, p + 1))}
                      disabled={page === totalPages}
                      className="px-4 py-2 text-xs font-bold bg-white border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-50 transition-colors"
                   >

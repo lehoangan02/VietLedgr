@@ -1,27 +1,29 @@
 'use client';
+import { useRef } from 'react';
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { ChevronLeft, ChevronRight, Eye, Download, Loader2, AlertCircle, LogIn } from 'lucide-react';
 import Sidebar from '@/components/SideBar';
-import { 
-  Transaction, 
-  TransactionItem, 
-  TransactionListResponse, 
-  TransactionSummary 
+import {
+  Transaction,
+  TransactionItem,
+  TransactionListResponse,
+  TransactionSummary
 } from '@/lib/fast-api/transactions';
 
 // ============================================================================
 // CONFIGURATION
 // ============================================================================
 const API_BASE_URL = '/api/transactions';
+const FASTAPI_URL = process.env.FASTAPI_URL || "http://localhost:8000";
 
 // ============================================================================
 // METRIC CARD COMPONENT
 // ============================================================================
 const MetricCard: React.FC<{ label: string; value: number | string; icon: string }> = ({ label, value, icon }) => {
   const bgColor = icon === '💰' ? 'bg-blue-50' : icon === '📊' ? 'bg-purple-50' : icon === '👥' ? 'bg-green-50' : 'bg-orange-50';
-  
+
   // Format value based on label type
   const formatValue = () => {
     if (typeof value !== 'number') return value;
@@ -44,10 +46,16 @@ const MetricCard: React.FC<{ label: string; value: number | string; icon: string
   );
 };
 
+
 // ============================================================================
 // MAIN PAGE COMPONENT
 // ============================================================================
 export default function SaleListPage() {
+  const [detailModal, setDetailModal] = useState<{ open: boolean; item: any | null }>({ open: false, item: null });
+  // Cache for batch_id -> product_id and product_id -> product_name
+  const [batchProductMap, setBatchProductMap] = useState<Record<string, string>>({}); // batch_id -> product_id
+  const [productNameMap, setProductNameMap] = useState<Record<string, string>>({}); // product_id -> product_name
+  const [modalProductName, setModalProductName] = useState<string | null>(null);
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<'list' | 'summary'>('list');
   const [isLoading, setIsLoading] = useState(false);
@@ -59,15 +67,14 @@ export default function SaleListPage() {
   // Filters
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  const [startDate, setStartDate] = useState(new Date(new Date().setDate(new Date().getDate() - 30)).toISOString().split('T')[0]); 
+  const [startDate, setStartDate] = useState(new Date(new Date().setDate(new Date().getDate() - 30)).toISOString().split('T')[0]);
   const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]);
-  
+
   // Data State
   const [salesData, setSalesData] = useState<TransactionListResponse>({
     items: [], total: 0, page: 1, page_size: 10, total_pages: 0
   });
   const [summaryData, setSummaryData] = useState<TransactionSummary | null>(null);
-
   // ========================================================================
   // STEP 1: GET REAL STORE ID FROM PROXY
   // ========================================================================
@@ -76,7 +83,7 @@ export default function SaleListPage() {
       try {
         const res = await fetch('/api/user/me/store');
         const data = await res.json();
-        
+
         if (data.status === 200 && data.store_id) {
           setFilterStore(data.store_id);
         } else if (data.status === 403) {
@@ -90,6 +97,7 @@ export default function SaleListPage() {
     }
     resolveStore();
   }, []);
+
 
   // ========================================================================
   // STEP 2: FETCH DATA USING RESOLVED STORE ID
@@ -109,11 +117,11 @@ export default function SaleListPage() {
       });
 
       const res = await fetch(`${API_BASE_URL}?${params}`);
-      
+
       if (!res.ok) {
-         if (res.status === 401) throw new Error("AUTH_REQUIRED");
-         const errData = await res.json().catch(() => ({}));
-         throw new Error(errData.detail || `Error ${res.status}: Failed to fetch transactions`);
+        if (res.status === 401) throw new Error("AUTH_REQUIRED");
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.detail || `Error ${res.status}: Failed to fetch transactions`);
       }
 
       const data = await res.json();
@@ -146,9 +154,9 @@ export default function SaleListPage() {
       const res = await fetch(`${API_BASE_URL}/summary/report?${params}`);
 
       if (!res.ok) {
-         if (res.status === 401) throw new Error("AUTH_REQUIRED");
-         const errData = await res.json().catch(() => ({}));
-         throw new Error(errData.detail || `Error ${res.status}: Failed to fetch summary`);
+        if (res.status === 401) throw new Error("AUTH_REQUIRED");
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.detail || `Error ${res.status}: Failed to fetch summary`);
       }
 
       const data = await res.json();
@@ -181,6 +189,54 @@ export default function SaleListPage() {
     }
   }, [activeTab, fetchTransactions, fetchSummary, filterStore]);
 
+  // Fetch product name for modal when opened
+  useEffect(() => {
+    async function fetchProductNameForModal() {
+      if (!detailModal.open || !detailModal.item) {
+        setModalProductName(null);
+        return;
+      }
+      const batchId = detailModal.item.batch_id;
+      if (!batchId) {
+        setModalProductName('-');
+        console.log("No batch ID available");
+        return;
+      }
+      let productId = batchProductMap[batchId];
+      if (!productId) {
+        // Fetch batch info
+        try {
+          const res = await fetch(`${FASTAPI_URL}/api/batches/${batchId}`);
+          if (!res.ok) throw new Error('Failed to fetch batch');
+          const batchData = await res.json();
+          productId = batchData.product_id;
+          console.log("Fetched product ID for batch:", productId);
+          setBatchProductMap(prev => ({ ...prev, [batchId]: productId }));
+        } catch {
+          setModalProductName('-');
+          return;
+        }
+      }
+      let productName = productNameMap[productId];
+      if (!productName) {
+        // Fetch product info
+        try {
+          const res = await fetch(`${FASTAPI_URL}/api/products/${productId}`);
+          if (!res.ok) throw new Error('Failed to fetch product');
+          const productData = await res.json();
+          productName = productData.product_name || productData.name || '-';
+          console.log("Fetched product name:", productName);
+          setProductNameMap(prev => ({ ...prev, [productId]: productName }));
+        } catch {
+          setModalProductName('-');
+          return;
+        }
+      }
+      setModalProductName(productName);
+    }
+    fetchProductNameForModal();
+  }, [detailModal]);
+
   // UI calculations - filter by date range on frontend
   const displayItems = useMemo(() => {
     const start = new Date(startDate);
@@ -211,21 +267,21 @@ export default function SaleListPage() {
 
   // --- Render logic (Loading, Error, Tabs) ---
   if (!filterStore && !error) return (
-     <div className="flex h-screen items-center justify-center"><Loader2 className="animate-spin text-orange-500" /></div>
+    <div className="flex h-screen items-center justify-center"><Loader2 className="animate-spin text-orange-500" /></div>
   );
 
   if (error) {
     return (
-        <div className="w-full max-w-screen-2xl mx-auto flex gap-6">
-            <Sidebar />
-            <div className="flex-1 min-h-screen bg-gray-50 p-6 flex flex-col items-center justify-center">
-                {error === "AUTH_REQUIRED" ? (
-                  <button onClick={() => router.push('/login')} className="px-6 py-2 bg-orange-500 text-white rounded-lg">Login Required</button>
-                ) : (
-                  <div className="text-center"><AlertCircle className="text-red-500 mx-auto mb-2" /><p>{error}</p></div>
-                )}
-            </div>
+      <div className="w-full max-w-screen-2xl mx-auto flex gap-6">
+        <Sidebar />
+        <div className="flex-1 min-h-screen bg-gray-50 p-6 flex flex-col items-center justify-center">
+          {error === "AUTH_REQUIRED" ? (
+            <button onClick={() => router.push('/login')} className="px-6 py-2 bg-orange-500 text-white rounded-lg">Login Required</button>
+          ) : (
+            <div className="text-center"><AlertCircle className="text-red-500 mx-auto mb-2" /><p>{error}</p></div>
+          )}
         </div>
+      </div>
     );
   }
 
@@ -234,7 +290,7 @@ export default function SaleListPage() {
       <Sidebar />
       <div className="flex-1 min-h-screen bg-gray-50 p-6">
         <div className="mb-6"><h1 className="text-3xl font-bold text-gray-900">Sales Management</h1></div>
-        
+
         {/* Date Filters - visible for both tabs */}
         <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Filter by Date Range</h2>
@@ -283,48 +339,111 @@ export default function SaleListPage() {
         </div>
 
         {activeTab === 'list' ? (
-           <div className="bg-white rounded-lg border min-h-[400px]">
-             {isLoading ? <div className="p-20 text-center"><Loader2 className="animate-spin mx-auto" /></div> : (
-               <div className="overflow-x-auto">
-                 <table className="w-full text-sm text-left">
-                   <thead className="bg-gray-50 uppercase text-xs font-semibold">
-                     <tr>
-                        <th className="px-6 py-4">Date</th>
-                        <th className="px-6 py-4">TX ID</th>
-                        <th className="px-6 py-4 text-right">Qty</th>
-                        <th className="px-6 py-4 text-right">Total</th>
-                        <th className="px-6 py-4 text-center">Action</th>
-                     </tr>
-                   </thead>
-                   <tbody className="divide-y">
-                     {displayItems.length === 0 ? (
-                       <tr>
-                         <td colSpan={5} className="px-6 py-12 text-center text-gray-500">
-                           No sales recorded yet. Transactions will appear here once created.
-                         </td>
-                       </tr>
-                     ) : displayItems.map((item, idx) => (
-                       <tr key={idx} className="hover:bg-gray-50">
-                         <td className="px-6 py-4">{new Date(item.transaction_date!).toLocaleDateString()}</td>
-                         <td className="px-6 py-4 text-orange-500 font-mono">{item.transaction_id.slice(0,8)}</td>
-                         <td className="px-6 py-4 text-right">{item.quantity}</td>
-                         <td className="px-6 py-4 text-right font-bold">${(item.price_at_sale * item.quantity).toLocaleString()}</td>
-                         <td className="px-6 py-4 text-center"><Eye size={16} className="mx-auto text-gray-400" /></td>
-                       </tr>
-                     ))}
-                   </tbody>
-                 </table>
-               </div>
-             )}
-             {/* Pagination */}
-             <div className="p-4 border-t flex justify-between items-center text-sm">
-                <span>Showing {filteredTotal} entries </span>
-                <div className="flex gap-2">
-                   <button onClick={() => setPage(p => p - 1)} disabled={page === 1} className="px-3 py-1 border rounded disabled:opacity-30">Prev</button>
-                   <button onClick={() => setPage(p => p + 1)} disabled={page >= salesData.total_pages} className="px-3 py-1 border rounded disabled:opacity-30">Next</button>
-                </div>
-             </div>
-           </div>
+          <div className="bg-white rounded-lg border min-h-[400px]">
+            {isLoading ? <div className="p-20 text-center"><Loader2 className="animate-spin mx-auto" /></div> : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm text-left">
+                  <thead className="bg-gray-50 uppercase text-xs font-semibold">
+                    <tr>
+                      <th className="px-6 py-4">Date</th>
+                      <th className="px-6 py-4">TX ID</th>
+                      <th className="px-6 py-4 text-right">Qty</th>
+                      <th className="px-6 py-4 text-right">Total</th>
+                      <th className="px-6 py-4 text-center">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y">
+                    {displayItems.length === 0 ? (
+                      <tr>
+                        <td colSpan={5} className="px-6 py-12 text-center text-gray-500">
+                          No sales recorded yet. Transactions will appear here once created.
+                        </td>
+                      </tr>
+                    ) : displayItems.map((item, idx) => (
+                      <tr key={idx} className="hover:bg-gray-50">
+                        <td className="px-6 py-4">{new Date(item.transaction_date!).toLocaleString()}</td>
+                        <td className="px-6 py-4 text-orange-500 font-mono">{item.transaction_id.slice(0, 8)}</td>
+                        <td className="px-6 py-4 text-right">{item.quantity}</td>
+                        <td className="px-6 py-4 text-right font-bold">${(item.price_at_sale * item.quantity).toLocaleString()}</td>
+                        <td className="px-6 py-4 text-center">
+                          <button onClick={() => setDetailModal({ open: true, item })} title="View Details">
+                            <Eye size={16} className="mx-auto text-gray-400 hover:text-orange-500" />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                    {/* Detail Modal (move outside table/tbody for valid HTML and proper overlay) */}
+                    {detailModal.open && detailModal.item && (
+                      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+                        <div className="bg-white rounded-lg shadow-lg p-8 min-w-[320px] max-w-[90vw] relative">
+                          <button
+                            className="absolute top-2 right-2 text-gray-400 hover:text-orange-500 text-xl"
+                            onClick={() => setDetailModal({ open: false, item: null })}
+                            aria-label="Close"
+                          >
+                            &times;
+                          </button>
+                          <h3 className="text-xl font-bold mb-4 text-gray-900">Transaction Item Details</h3>
+                          <table className="w-full text-sm mb-2">
+                            <tbody>
+                              <tr>
+                                <td className="font-semibold pr-2 py-1 text-gray-700">Transaction ID:</td>
+                                <td className="py-1">{detailModal.item.transaction_id}</td>
+                              </tr>
+                              <tr>
+                                <td className="font-semibold pr-2 py-1 text-gray-700">Date:</td>
+                                <td className="py-1">{new Date(detailModal.item.transaction_date).toLocaleString()}</td>
+                              </tr>
+                              <tr>
+                                <td className="font-semibold pr-2 py-1 text-gray-700">Product Name:</td>
+                                <td className="py-1">{modalProductName ?? <span className="text-gray-400">Loading...</span>}</td>
+                              </tr>
+                              <tr>
+                                <td className="font-semibold pr-2 py-1 text-gray-700">Batch ID:</td>
+                                <td className="py-1">{detailModal.item.batch_id}</td>
+                              </tr>
+                              <tr>
+                                <td className="font-semibold pr-2 py-1 text-gray-700">Quantity:</td>
+                                <td className="py-1">{detailModal.item.quantity}</td>
+                              </tr>
+                              <tr>
+                                <td className="font-semibold pr-2 py-1 text-gray-700">Unit Price:</td>
+                                <td className="py-1">${detailModal.item.price_at_sale?.toLocaleString()}</td>
+                              </tr>
+                              <tr>
+                                <td className="font-semibold pr-2 py-1 text-gray-700">Total:</td>
+                                <td className="py-1 font-bold">${(detailModal.item.price_at_sale * detailModal.item.quantity).toLocaleString()}</td>
+                              </tr>
+                              {detailModal.item.tax !== undefined && (
+                                <tr>
+                                  <td className="font-semibold pr-2 py-1 text-gray-700">Tax:</td>
+                                  <td className="py-1">${detailModal.item.tax.toLocaleString()}</td>
+                                </tr>
+                              )}
+                              {detailModal.item.discount !== undefined && (
+                                <tr>
+                                  <td className="font-semibold pr-2 py-1 text-gray-700">Discount:</td>
+                                  <td className="py-1">${detailModal.item.discount.toLocaleString()}</td>
+                                </tr>
+                              )}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            )}
+            {/* Pagination */}
+            <div className="p-4 border-t flex justify-between items-center text-sm">
+              <span>Showing {filteredTotal} entries </span>
+              <div className="flex gap-2">
+                <button onClick={() => setPage(p => p - 1)} disabled={page === 1} className="px-3 py-1 border rounded disabled:opacity-30">Prev</button>
+                <button onClick={() => setPage(p => p + 1)} disabled={page >= salesData.total_pages} className="px-3 py-1 border rounded disabled:opacity-30">Next</button>
+              </div>
+            </div>
+          </div>
         ) : (
           <div>
             {isLoading ? <Loader2 className="animate-spin mx-auto" /> : (
@@ -393,4 +512,6 @@ export default function SaleListPage() {
       </div>
     </div>
   );
+
 }
+
