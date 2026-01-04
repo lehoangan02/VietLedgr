@@ -30,25 +30,25 @@ export default function Sidebar() {
     { title: "Settings", items: ["Advanced"] },
   ];
 
-   const routeMap: Record<string, string> = {
-      'Dashboard Report': '/dashboard',
-      'Manage Invite Code': '/invite-code',
-      'Products': '/products',
-      'Manage Stock': '/products/manage-stock',
-      'Sales Management': '/sales',
-      'Stores': '/stores',
-      'Warehouses': '/warehouses',
-      'Customers': '/customers',
-      'Suppliers': '/suppliers',
-      'Advanced': '/settings',
-      'General Ledger': '/ledger',
-      'Invest': '/ledger/invest',
-      'Expenses': '/ledger/expenses',
-      'Purchase Returns': '/products/purchase-returns',
-      'Purchase Orders': '/products/purchase-orders',
-      'Draw Money': '/ledger/draw-money',
-      'Generate Report': '/ai',
-   }
+  const routeMap: Record<string, string> = {
+    'Dashboard Report': '/dashboard',
+    'Manage Invite Code': '/invite-code',
+    'Products': '/products',
+    'Manage Stock': '/purchases/manage-stock',
+    'Sales Management': '/sales',
+    'Stores': '/stores',
+    'Warehouses': '/warehouses',
+    'Customers': '/customers',
+    'Suppliers': '/suppliers',
+    'Advanced': '/settings',
+    'General Ledger': '/ledger',
+    'Invest': '/ledger/invest',
+    'Expenses': '/ledger/expenses',
+    'Purchase Returns': '/purchases/returns',
+    'Purchase Orders': '/purchases/orders',
+    'Draw Money': '/ledger/draw-money',
+    'Generate Report': '/ai',
+  }
 
   // Find the section that contains the current route
   function getSectionWithActiveRoute() {
@@ -151,11 +151,10 @@ export default function Sidebar() {
                         }}
                         role={route ? "button" : undefined}
                         tabIndex={route ? 0 : undefined}
-                        className={`flex items-center text-sm px-3 py-2 rounded-md hover:bg-orange-50 ${
-                          isActive
+                        className={`flex items-center text-sm px-3 py-2 rounded-md hover:bg-orange-50 ${isActive
                             ? "bg-orange-50 font-medium text-orange-600"
                             : "text-gray-700"
-                        } cursor-pointer`}
+                          } cursor-pointer`}
                       >
                         <span className="flex-1">{it}</span>
                       </li>

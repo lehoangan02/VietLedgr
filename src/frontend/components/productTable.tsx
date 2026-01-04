@@ -5,6 +5,7 @@ import type { StaticImageData } from 'next/image'
 import { Eye, Edit3, Trash2, Loader2, Search, Package, AlertCircle } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 
+
 type Product = {
    product_id: string
    sku: string
@@ -28,20 +29,21 @@ interface Warehouse {
 }
 
 interface ProductTableProps {
-   products?: Product[]
-   warehouses?: Warehouse[]
+   products: Product[]
+   warehouses: Warehouse[]
+   isLoading?: boolean
+   error?: string | null
+   onDelete?: (id: string, sku: string) => void
 }
 
 export default function ProductTable({
-   products: productsProp = [],
-   warehouses: warehousesProp = []
+   products,
+   warehouses,
+   isLoading = false,
+   error = null,
+   onDelete
 }: ProductTableProps) {
    const router = useRouter()
-
-   const [products, setProducts] = useState<Product[]>(productsProp)
-   const [warehouses, setWarehouses] = useState<Warehouse[]>(warehousesProp)
-   const [isLoading, setIsLoading] = useState(productsProp.length === 0)
-   const [error, setError] = useState<string | null>(null)
 
    const [page, setPage] = useState<number>(1)
    const pageSize = 10
@@ -53,55 +55,19 @@ export default function ProductTable({
    const [importProgress, setImportProgress] = useState<number>(0)
    const [importErrors, setImportErrors] = useState<string[]>([])
 
-   // Fetch products if not provided via props
-   useEffect(() => {
-      if (productsProp.length > 0) return
-      const fetchProducts = async () => {
-         setIsLoading(true)
-         try {
-            const res = await fetch('http://localhost:8000/api/products/')
-            if (!res.ok) throw new Error('Failed to fetch product data from server.')
-            const data = await res.json()
-            setProducts(data)
-         } catch (err: any) {
-            setError(err.message || 'An unexpected error occurred')
-         } finally {
-            setIsLoading(false)
-         }
-      }
-      fetchProducts()
-   }, [productsProp])
 
-   // Fetch warehouses if not provided via props
-   useEffect(() => {
-      if (warehousesProp.length > 0) return
-      const fetchWarehouses = async () => {
-         try {
-            const res = await fetch('http://localhost:8000/api/warehouses/')
-            const data = await res.json()
-            const items = Array.isArray(data) ? data : (data.items ?? [])
-            setWarehouses(items)
-         } catch (err) {
-            console.error("Could not fetch warehouses:", err)
-         }
-      }
-      fetchWarehouses()
-   }, [warehousesProp])
 
-   // Delete product
-   const handleDelete = async (id: string) => {
-      if (!confirm('Are you sure you want to delete this product?')) return
-      try {
-         const res = await fetch(`http://localhost:8000/api/products/${id}`, { method: 'DELETE' })
-         if (res.ok) setProducts(prev => prev.filter(p => p.product_id !== id))
-         else {
-            const errorData = await res.json()
-            alert(`Error: ${errorData.detail || 'Could not delete product'}`)
-         }
-      } catch {
-         alert("Network error: Failed to reach the server.")
-      }
+
+   // Call parent delete handler
+   const handleDelete = (id: string, sku: string) => {
+      if (onDelete) onDelete(id, sku)
    }
+
+   // useEffect(() => {
+   //    // Print all fetched retail categories for debugging
+   //    const allCategories = products.map((p) => p.retail_category)
+   //    console.log('Fetched retail categories:', allCategories)
+   // }, [products])
 
    const categories = useMemo(() =>
       Array.from(new Set(products.map((p) => p.retail_category).filter(Boolean) as string[])),
@@ -130,6 +96,7 @@ export default function ProductTable({
       setPage(next)
       window.scrollTo({ top: 0, behavior: 'smooth' })
    }
+
 
    if (isLoading) return (
       <div className="flex flex-col h-96 items-center justify-center bg-white rounded-lg shadow border border-gray-100">
@@ -280,7 +247,7 @@ export default function ProductTable({
                               {p.retail_category || 'Uncategorized'}
                            </span>
                         </td>
-                        <td className="py-4 font-semibold text-gray-900">${p.price}</td>
+                        <td className="py-4 font-semibold text-gray-900">{p.price}</td>
                         <td className="py-4">
                            <div className="flex flex-col gap-1">
                               <span className="text-gray-700 font-medium">{p.qty} {p.unit || 'Pcs'}</span>
@@ -315,7 +282,7 @@ export default function ProductTable({
                               </button>
                               <button
                                  title="Delete"
-                                 onClick={() => handleDelete(p.product_id)}
+                                 onClick={() => handleDelete(p.product_id, p.sku)}
                                  className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md"
                               >
                                  <Trash2 size={16} />
