@@ -24,9 +24,11 @@ export default function AddProductPage() {
    const [quantityAlert, setQuantityAlert] = useState<number | ''>('')
    const fileInputRef = React.useRef<HTMLInputElement>(null)
 
+   const FASTAPI_URL = process.env.FASTAPI_URL || "http://localhost:8000";
+
    const [warehousesList, setWarehousesList] = useState<{ warehouse_id: string, name: string }[]>([]);
    useEffect(() => {
-      fetch('http://localhost:8000/api/warehouses/')
+      fetch(`${FASTAPI_URL}/api/warehouses/`)
          .then(res => res.json())
          .then(data => setWarehousesList(Array.isArray(data) ? data : (data.items ?? [])));
    }, []);
@@ -75,7 +77,7 @@ export default function AddProductPage() {
 
       try {
          // 2. Create product first
-         const productRes = await fetch('http://localhost:8000/api/products/', {
+         const productRes = await fetch(`${FASTAPI_URL}/api/products/`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(productPayload)
@@ -97,7 +99,7 @@ export default function AddProductPage() {
          }
 
          // 4. Create batch
-         const batchRes = await fetch('http://localhost:8000/api/batches/', {
+         const batchRes = await fetch(`${FASTAPI_URL}/api/batches/`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(batchPayload)

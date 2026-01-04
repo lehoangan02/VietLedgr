@@ -2,9 +2,9 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import Sidebar from '@/components/SideBar';
-import { 
-  Loader2, 
-  Search, 
+import {
+  Loader2,
+  Search,
   Calendar,
   RotateCcw,
   ArrowLeft,
@@ -26,6 +26,8 @@ interface BatchResponse {
   profit_margin_percent: number | string;
 }
 
+const FASTAPI_URL = process.env.FASTAPI_URL || "http://localhost:8000";
+
 export default function ReturnOrdersPage() {
   const router = useRouter();
   const [batches, setBatches] = useState<BatchResponse[]>([]);
@@ -37,13 +39,13 @@ export default function ReturnOrdersPage() {
     setIsLoading(true);
     setError(null);
     try {
-      const res = await fetch('http://localhost:8000/api/batches/', {
+      const res = await fetch(`${FASTAPI_URL}/api/batches/`, {
         method: 'GET',
         headers: { 'Accept': 'application/json' },
       });
-      
+
       if (!res.ok) throw new Error(`HTTP Error ${res.status}`);
-      
+
       const data = await res.json();
       // Router returns: list[batch_schema.BatchResponse]
       setBatches(Array.isArray(data) ? data : []);
@@ -61,7 +63,7 @@ export default function ReturnOrdersPage() {
 
   const handleReturnAction = async (batch: BatchResponse) => {
     const amount = prompt(`Units to return to ${batch.supplier_name || 'provider'}?\nStock Available: ${batch.stock}`, "1");
-    
+
     if (amount === null) return;
     const qty = parseInt(amount);
 
@@ -72,14 +74,14 @@ export default function ReturnOrdersPage() {
 
     try {
       // Logic: Update stock via PUT /{batch_id} using BatchUpdate schema
-      const res = await fetch(`http://localhost:8000/api/batches/${batch.batch_id}`, {
+      const res = await fetch(`${FASTAPI_URL}/api/batches/${batch.batch_id}`, {
         method: 'PUT',
-        headers: { 
+        headers: {
           'Content-Type': 'application/json',
-          'Accept': 'application/json' 
+          'Accept': 'application/json'
         },
-        body: JSON.stringify({ 
-          stock: batch.stock - qty 
+        body: JSON.stringify({
+          stock: batch.stock - qty
         })
       });
 
@@ -87,7 +89,7 @@ export default function ReturnOrdersPage() {
         const errData = await res.json();
         throw new Error(errData.detail || "Failed to update batch.");
       }
-      
+
       alert(`Success: ${qty} units processed for return.`);
       fetchBatches(); // Refresh list to see updated stock
     } catch (err: any) {
@@ -96,8 +98,8 @@ export default function ReturnOrdersPage() {
   };
 
   const filteredBatches = useMemo(() => {
-    return batches.filter(b => 
-      !query || 
+    return batches.filter(b =>
+      !query ||
       b.supplier_name?.toLowerCase().includes(query.toLowerCase()) ||
       b.batch_id.toLowerCase().includes(query.toLowerCase())
     );
@@ -118,10 +120,10 @@ export default function ReturnOrdersPage() {
         <div className="flex justify-between items-end mb-8">
           <div>
             <div className="flex items-center gap-2 mb-2">
-                <button onClick={() => router.back()} className="p-2 hover:bg-gray-100 rounded-full transition">
-                    <ArrowLeft size={20} className="text-gray-400" />
-                </button>
-                <span className="text-[10px] font-black text-indigo-600 uppercase tracking-widest bg-indigo-50 px-3 py-1 rounded-full">Batch Reversal</span>
+              <button onClick={() => router.back()} className="p-2 hover:bg-gray-100 rounded-full transition">
+                <ArrowLeft size={20} className="text-gray-400" />
+              </button>
+              <span className="text-[10px] font-black text-indigo-600 uppercase tracking-widest bg-indigo-50 px-3 py-1 rounded-full">Batch Reversal</span>
             </div>
             <h1 className="text-2xl font-black text-gray-900 uppercase tracking-tight">Return Orders</h1>
             <p className="text-sm text-gray-500 font-medium">Decrease stock levels for specific inbound batches</p>
@@ -138,8 +140,8 @@ export default function ReturnOrdersPage() {
           <div className="p-6">
             <div className="relative w-full">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-              <input 
-                type="text" 
+              <input
+                type="text"
                 placeholder="Filter by Supplier or Batch UUID..."
                 className="w-full pl-11 pr-4 py-3 bg-gray-50 border-none rounded-2xl text-sm focus:ring-2 focus:ring-indigo-100 outline-none transition-all"
                 value={query}
@@ -173,15 +175,15 @@ export default function ReturnOrdersPage() {
                   <td className="py-5 font-semibold text-gray-700">{batch.supplier_name || 'N/A'}</td>
                   <td className="py-5 text-center">
                     <div className="inline-flex items-center gap-2">
-                        <span className={`font-black ${batch.stock <= 0 ? 'text-gray-300' : 'text-gray-900'}`}>{batch.stock}</span>
-                        <span className="text-[10px] text-gray-400 uppercase font-bold tracking-tighter">Units</span>
+                      <span className={`font-black ${batch.stock <= 0 ? 'text-gray-300' : 'text-gray-900'}`}>{batch.stock}</span>
+                      <span className="text-[10px] text-gray-400 uppercase font-bold tracking-tighter">Units</span>
                     </div>
                   </td>
                   <td className="py-5 font-mono text-xs font-bold text-gray-500">
                     {Number(batch.cost).toLocaleString()}
                   </td>
                   <td className="py-5 pr-8 text-right">
-                    <button 
+                    <button
                       onClick={() => handleReturnAction(batch)}
                       disabled={batch.stock <= 0}
                       className="px-5 py-2.5 bg-indigo-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-700 transition-all disabled:opacity-20 shadow-lg shadow-indigo-100 flex items-center gap-2 ml-auto"
@@ -194,7 +196,7 @@ export default function ReturnOrdersPage() {
               ))}
               {filteredBatches.length === 0 && (
                 <tr>
-                   <td colSpan={5} className="py-20 text-center text-gray-400 text-xs font-bold uppercase tracking-widest">No Batches Found</td>
+                  <td colSpan={5} className="py-20 text-center text-gray-400 text-xs font-bold uppercase tracking-widest">No Batches Found</td>
                 </tr>
               )}
             </tbody>

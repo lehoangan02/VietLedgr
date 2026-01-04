@@ -1,5 +1,3 @@
-import { getApiBaseUrl, authHeaders } from "./common";
-
 // ============================================================================
 // TYPES
 // ============================================================================
@@ -55,33 +53,6 @@ export interface TransactionSummary {
 // ============================================================================
 // API FUNCTIONS
 // ============================================================================
-
-/**
- * Create a new transaction (checkout)
- */
-export async function postTransaction(store_id: string, items: CheckoutItem[], device_id?: string) {
-  const base = getApiBaseUrl();
-  const url = `${base}/api/transactions/`;
-  const body = JSON.stringify({ store_id, device_id, items });
-  console.debug("[Checkout] POST /transactions", { url, body });
-  const res = await fetch(url, {
-    method: "POST",
-    headers: authHeaders(),
-    body,
-  });
-  const text = await res.text().catch(() => "");
-  if (!res.ok) {
-    console.error("[Checkout] Failed", res.status, text);
-    throw new Error(`Checkout failed: ${res.status}`);
-  }
-  console.debug("[Checkout] Success", text);
-  try {
-    return JSON.parse(text);
-  } catch {
-    return text;
-  }
-}
-
 /**
  * Fetch paginated list of transactions for a store
  */
@@ -155,4 +126,32 @@ export async function fetchTransactionSummary(
     console.error("[fetchTransactionSummary] Error:", err.message);
     throw err;
   }
+}
+
+
+/**
+ * Post a new transaction order (for POS checkout)
+ * @param store_id - Store where transaction occurs
+ * @param items - Array of { batch_id, quantity, price_at_sale }
+ * @param device_id - Optional device identifier (e.g., POS terminal)
+ * @returns The created transaction with all items
+ */
+export async function postTransactionOrder(
+  store_id: string,
+  items: { batch_id: string; quantity: number; price_at_sale: number }[],
+  device_id?: string
+): Promise<any> {
+  const body = JSON.stringify({ store_id, device_id, items });
+  const res = await fetch('/api/transactions', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body,
+    credentials: 'include',
+  });
+  if (!res.ok) {
+    console.log(body)
+    const text = await res.text().catch(() => '');
+    throw new Error(`Failed to post transaction: ${res.status} ${text}`);
+  }
+  return res.json();
 }

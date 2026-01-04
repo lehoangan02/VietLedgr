@@ -16,9 +16,11 @@ export default function ShrinkagePage() {
   const [reason, setReason] = useState('Damage')
   const [isSubmitting, setIsSubmitting] = useState(false)
 
+  const FASTAPI_URL = process.env.FASTAPI_URL || "http://localhost:8000";
+
   useEffect(() => {
     if (!productId) return
-    fetch(`http://localhost:8000/api/products/${productId}`)
+    fetch(`${FASTAPI_URL}/api/products/${productId}`)
       .then(res => res.json())
       .then(data => {
         setProduct(data)
@@ -52,9 +54,9 @@ export default function ShrinkagePage() {
   return (
     <div className="w-full max-w-screen-2xl mx-auto flex gap-6 p-6 min-h-screen bg-gray-50">
       <Sidebar />
-      
+
       <main className="flex-1">
-        <button 
+        <button
           onClick={() => router.back()}
           className="flex items-center gap-2 text-gray-500 hover:text-gray-800 mb-6 transition"
         >
@@ -75,21 +77,21 @@ export default function ShrinkagePage() {
 
           <form onSubmit={handleShrinkage} className="p-8 space-y-6">
             <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl border border-gray-100">
-               <div className="flex-1">
-                  <p className="text-xs font-bold text-gray-400 uppercase">Product</p>
-                  <p className="font-semibold text-gray-800">{product.name}</p>
-               </div>
-               <div className="text-right">
-                  <p className="text-xs font-bold text-gray-400 uppercase">Current On-Hand</p>
-                  <p className="font-mono font-bold text-gray-900">{product.qty} {product.unit}</p>
-               </div>
+              <div className="flex-1">
+                <p className="text-xs font-bold text-gray-400 uppercase">Product</p>
+                <p className="font-semibold text-gray-800">{product.name}</p>
+              </div>
+              <div className="text-right">
+                <p className="text-xs font-bold text-gray-400 uppercase">Current On-Hand</p>
+                <p className="font-mono font-bold text-gray-900">{product.qty} {product.unit}</p>
+              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-6">
               <div>
                 <label className="block text-xs font-bold text-gray-400 uppercase mb-2">Quantity Lost</label>
-                <input 
-                  type="number" 
+                <input
+                  type="number"
                   min="1"
                   max={product.qty}
                   value={reduction}
@@ -100,7 +102,7 @@ export default function ShrinkagePage() {
 
               <div>
                 <label className="block text-xs font-bold text-gray-400 uppercase mb-2">Reason for Loss</label>
-                <select 
+                <select
                   value={reason}
                   onChange={(e) => setReason(e.target.value)}
                   className="w-full border border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-red-100 focus:border-red-400 outline-none transition-all bg-white"
@@ -121,14 +123,14 @@ export default function ShrinkagePage() {
             </div>
 
             <div className="flex gap-3 pt-4">
-              <button 
+              <button
                 type="button"
                 onClick={() => router.back()}
                 className="flex-1 px-6 py-3 border border-gray-200 text-gray-600 rounded-xl font-bold hover:bg-gray-50 transition"
               >
                 Cancel
               </button>
-              <button 
+              <button
                 type="submit"
                 disabled={isSubmitting || reduction <= 0}
                 className="flex-1 px-6 py-3 bg-red-600 text-white rounded-xl font-bold hover:bg-red-700 shadow-lg shadow-red-100 disabled:opacity-50 transition"

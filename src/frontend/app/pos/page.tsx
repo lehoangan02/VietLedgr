@@ -3,6 +3,7 @@ import React, { useMemo, useState, useEffect } from 'react'
 import type { StaticImageData } from 'next/image'
 import { Trash2 } from 'lucide-react'
 import { toast, ToastContainer } from 'react-toastify'
+import { postTransactionOrder } from '@/lib/fast-api/transactions'
 import 'react-toastify/dist/ReactToastify.css'
 import InvoicePrint from '@/components/InvoicePrint'
 
@@ -59,6 +60,8 @@ type CartItem = {
    qty: number
 }
 
+const FASTAPI_URL = process.env.FASTAPI_URL || "http://localhost:8000";
+
 export default function PosPage() {
    const [query, setQuery] = useState('')
    const [category, setCategory] = useState<string | null>(null)
@@ -79,7 +82,7 @@ export default function PosPage() {
    useEffect(() => {
       const fetchStores = async () => {
          try {
-            const res = await fetch(`http://localhost:8000/api/stores/${store_id}`);
+            const res = await fetch(`${FASTAPI_URL}/api/stores/${store_id}`);
             const data = await res.json();
             setStores(data);
          } catch (err) {
@@ -92,7 +95,7 @@ export default function PosPage() {
    useEffect(() => {
       const fetchWarehouses = async () => {
          try {
-            const res = await fetch('http://localhost:8000/api/warehouses/');
+            const res = await fetch(`${FASTAPI_URL}/api/warehouses/`);
             const data = await res.json();
             const items = Array.isArray(data) ? data : (data.items ?? []);
             setWarehouses(items);
@@ -107,7 +110,7 @@ export default function PosPage() {
    useEffect(() => {
       const fetchBatches = async () => {
          try {
-            const res = await fetch('http://localhost:8000/api/batches/')
+            const res = await fetch(`${FASTAPI_URL}/api/batches/`)
             const data = await res.json()
             setBatches(Array.isArray(data) ? data : (data.items ?? []))
          } catch (err) {
@@ -120,7 +123,7 @@ export default function PosPage() {
    useEffect(() => {
       const fetchProducts = async () => {
          try {
-            const res = await fetch('http://localhost:8000/api/products/')
+            const res = await fetch(`${FASTAPI_URL}/api/products/`)
             const data = await res.json()
             setProductsInfo(Array.isArray(data) ? data : (data.items ?? []))
          } catch (err) {
@@ -228,15 +231,27 @@ export default function PosPage() {
       toast.error("Order has been removed!", { position: "top-right" });
    };
 
-   const handlePayment = () => {
+   const handlePayment = async () => {
       if (cartItems.length === 0) {
          toast.warning("Cart is empty!", { position: "top-right" });
          return;
       }
-      toast.success("Payment successful!", { position: "top-right" });
-      setCart({});
-      setPaymentMethod(null);
-      setQrUrl(null);
+      try {
+         // Build items array for API
+         const items = cartItems.map(it => ({
+            batch_id: it.product.sku, // sku is batch_id in this context
+            quantity: it.qty,
+            price_at_sale: Number(String(it.product.price).replace(/[^0-9.-]+/g, '')) || 0
+         }))
+         // You may want to use a real device_id if available
+         await postTransactionOrder(store_id, items)
+         toast.success("Payment successful!", { position: "top-right" });
+         setCart({});
+         setPaymentMethod(null);
+         setQrUrl(null);
+      } catch (err: any) {
+         toast.error("Payment failed: " + (err.message || 'Unknown error'), { position: "top-right" });
+      }
    };
 
    const handlePrint = () => {
