@@ -43,3 +43,36 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ detail: "Internal Server Error" }, { status: 500 });
   }
 }
+
+export async function POST(request: NextRequest) {
+  const cookieStore = await cookies();
+  const accessToken = cookieStore.get("access_token")?.value;
+  console.log("Access Token:", accessToken);
+
+  if (!accessToken) {
+    return NextResponse.json({ detail: "Not authenticated" }, { status: 401 });
+  }
+
+  try {
+    const body = await request.text();
+    const res = await fetch(`${FASTAPI_URL}/api/transactions/`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body,
+    });
+
+    const data = await res.json().catch(() => null);
+    if (!res.ok) {
+      return NextResponse.json(
+        { detail: data?.detail || "Failed to post transaction" },
+        { status: res.status }
+      );
+    }
+    return NextResponse.json(data, { status: 201 });
+  } catch (error) {
+    return NextResponse.json({ detail: "Internal Server Error" }, { status: 500 });
+  }
+}
