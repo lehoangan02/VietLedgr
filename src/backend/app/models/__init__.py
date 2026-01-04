@@ -1,15 +1,16 @@
-# Re-export all models from submodules
-from .base import Base, TokenPayload, AccountType, account_type_enum, RetailCategory, retail_category_enum
-from .store import Store
-from .role import Role
-from .user import User
-from .tax import TaxDetail
-from .product import ProductCategory, Product
-from .warehouse import Warehouse, Batch
-from .transaction import Transaction, TransactionItem
+from .base import (AccountType, Base, RetailCategory, TokenPayload,
+                   account_type_enum, retail_category_enum)
 from .expense import Expense
-from .ledger import GeneralLedgerEntry
 from .invite import InviteCode
+from .ledger import GeneralLedgerEntry
+from .product import Product, ProductCategory
+from .role import Role
+from .store import Store
+from .supplier import Supplier
+from .tax import TaxDetail
+from .transaction import Transaction, TransactionItem
+from .user import User
+from .warehouse import Batch, Warehouse
 
 __all__ = [
     "Base",
@@ -31,4 +32,5 @@ __all__ = [
     "Expense",
     "GeneralLedgerEntry",
     "InviteCode",
+    "Supplier",
 ]

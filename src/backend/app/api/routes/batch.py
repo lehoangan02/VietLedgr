@@ -1,25 +1,16 @@
 import uuid
-from datetime import datetime, timedelta
-from typing import Annotated, Any, Optional
 
 from app.api.deps import SessionDep
-from app.core import security
-from app.core.config import settings
 from app.crud import batch
 from app.models import Batch
 from app.schemas import batch as batch_schema
-from fastapi import APIRouter, Body, Depends, HTTPException
-from fastapi.security import OAuth2PasswordRequestForm
-from pydantic import BaseModel
+from fastapi import APIRouter, HTTPException
 
 router = APIRouter(prefix="/batches", tags=["batches"])
 
 
 @router.get("/{batch_id}", response_model=batch_schema.BatchResponse)
-def get_batch_by_id(*, session: SessionDep, batch_id: uuid.UUID) -> Any:
-    """
-    Retrieve a batch by its ID
-    """
+def get_batch_by_id(*, session: SessionDep, batch_id: uuid.UUID):
     db_batch = batch.get_batch_by_id(db=session, batch_id=batch_id)
     if not db_batch:
         raise HTTPException(status_code=404, detail="Batch not found")
@@ -27,49 +18,38 @@ def get_batch_by_id(*, session: SessionDep, batch_id: uuid.UUID) -> Any:
 
 
 @router.post("/", response_model=batch_schema.BatchResponse)
-def create_batch(*, session: SessionDep, batch_in: batch_schema.BatchCreate) -> Any:
-    """
-    Create a new batch
-    """
-    db_batch = batch.create_batch(db=session, batch=batch_in)
-    if not db_batch:
-        raise HTTPException(status_code=400, detail="Batch could not be created")
+def create_batch(*, session: SessionDep, batch_in: batch_schema.BatchCreate):
+    try:
+        db_batch = batch.create_batch(db=session, batch=batch_in)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
     return db_batch
 
 
 @router.put("/{batch_id}", response_model=batch_schema.BatchResponse)
 def update_batch(
-    session: SessionDep, batch_id: uuid.UUID, batch_in: batch_schema.BatchUpdate
-) -> Any:
-    """
-    Update a batch
-    """
-    db_batch = batch.update_batch(db=session, batch_id=batch_id, batch=batch_in)
+    *, session: SessionDep, batch_id: uuid.UUID, batch_in: batch_schema.BatchUpdate
+):
+    try:
+        db_batch = batch.update_batch(db=session, batch_id=batch_id, batch=batch_in)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
     if not db_batch:
         raise HTTPException(status_code=404, detail="Batch not found")
     return db_batch
 
 
 @router.get("/", response_model=batch_schema.BatchList)
-def get_batches(*, session: SessionDep, skip: int = 0, limit: int = 100) -> Any:
-    """
-    Retrieve multiple batches with pagination
-    """
+def get_batches(*, session: SessionDep, skip: int = 0, limit: int = 100):
     db_batches = batch.get_batches(db=session, skip=skip, limit=limit)
     total = session.query(Batch).count()
     return {"items": db_batches, "total": total}
 
 
 @router.delete("/{batch_id}", response_model=dict)
-def delete_batch(*, session: SessionDep, batch_id: uuid.UUID) -> Any:
-    """
-    Delete a batch
-    """
-    db_batch = batch.get_batch_by_id(db=session, batch_id=batch_id)
-    if not db_batch:
+def delete_batch(*, session: SessionDep, batch_id: uuid.UUID):
+    ok = batch.delete_batch(db=session, batch_id=batch_id)
+    if not ok:
         raise HTTPException(status_code=404, detail="Batch not found")
-
-    session.delete(db_batch)
-    session.commit()
-
     return {"detail": "Batch deleted successfully"}
