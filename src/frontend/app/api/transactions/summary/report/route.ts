@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
           "Content-Type": "application/json",
         },
         cache: "no-store",
-      }
+      },
     );
 
     const data = await res.json().catch(() => null);
@@ -32,13 +32,16 @@ export async function GET(request: NextRequest) {
     if (!res.ok) {
       return NextResponse.json(
         { detail: data?.detail || "Failed to fetch summary" },
-        { status: res.status }
+        { status: res.status },
       );
     }
 
     return NextResponse.json(data, { status: 200 });
   } catch (error) {
     console.error("[API] Transaction summary error:", error);
-    return NextResponse.json({ detail: "Internal Server Error" }, { status: 500 });
+    return NextResponse.json(
+      { detail: "Internal Server Error" },
+      { status: 500 },
+    );
   }
 }

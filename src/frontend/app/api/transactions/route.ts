@@ -1,78 +1,68 @@
-// app/api/transactions/route.ts
 import { cookies } from "next/headers";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 
-// Ensure this is defined in your .env.local (e.g., http://localhost:8000)
-const FASTAPI_URL = process.env.FASTAPI_URL || "http://localhost:8000";
+const FASTAPI_URL = process.env.FASTAPI_URL;
+if (!FASTAPI_URL) throw new Error("Missing FASTAPI_URL env var!");
 
-export async function GET(request: NextRequest) {
+export async function GET(request: Request) {
   const cookieStore = await cookies();
   const accessToken = cookieStore.get("access_token")?.value;
-
-  if (!accessToken) {
+  if (!accessToken)
     return NextResponse.json({ detail: "Not authenticated" }, { status: 401 });
-  }
 
-  // Forward query parameters (page, store_id, etc.)
   const { searchParams } = new URL(request.url);
 
-  try {
-    const res = await fetch(
-      `${FASTAPI_URL}/api/transactions?${searchParams.toString()}`,
-      {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          "Content-Type": "application/json",
-        },
-        cache: "no-store",
-      }
-    );
-
-    const data = await res.json().catch(() => null);
-
-    if (!res.ok) {
-      return NextResponse.json(
-        { detail: data?.detail || "Failed to fetch transactions" },
-        { status: res.status }
-      );
-    }
-
-    return NextResponse.json(data, { status: 200 });
-  } catch (error) {
-    return NextResponse.json({ detail: "Internal Server Error" }, { status: 500 });
-  }
-}
-
-export async function POST(request: NextRequest) {
-  const cookieStore = await cookies();
-  const accessToken = cookieStore.get("access_token")?.value;
-  console.log("Access Token:", accessToken);
-
-  if (!accessToken) {
-    return NextResponse.json({ detail: "Not authenticated" }, { status: 401 });
-  }
-
-  try {
-    const body = await request.text();
-    const res = await fetch(`${FASTAPI_URL}/api/transactions/`, {
-      method: "POST",
+  const res = await fetch(
+    `${FASTAPI_URL}/api/transactions?${searchParams.toString()}`,
+    {
+      method: "GET",
       headers: {
         Authorization: `Bearer ${accessToken}`,
-        "Content-Type": "application/json",
+        Accept: "application/json",
       },
-      body,
-    });
+      cache: "no-store",
+    },
+  );
 
-    const data = await res.json().catch(() => null);
-    if (!res.ok) {
-      return NextResponse.json(
-        { detail: data?.detail || "Failed to post transaction" },
-        { status: res.status }
-      );
+  const text = await res.text();
+  const data = (() => {
+    try {
+      return JSON.parse(text);
+    } catch {
+      return { detail: text };
     }
-    return NextResponse.json(data, { status: 201 });
-  } catch (error) {
-    return NextResponse.json({ detail: "Internal Server Error" }, { status: 500 });
-  }
+  })();
+
+  return NextResponse.json(data, { status: res.status });
+}
+
+export async function POST(request: Request) {
+  const cookieStore = await cookies();
+  const accessToken = cookieStore.get("access_token")?.value;
+  if (!accessToken)
+    return NextResponse.json({ detail: "Not authenticated" }, { status: 401 });
+
+  const body = await request.text();
+
+  const res = await fetch(`${FASTAPI_URL}/api/transactions/`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    },
+    body,
+    cache: "no-store",
+  });
+
+  const text = await res.text();
+  const data = (() => {
+    try {
+      return JSON.parse(text);
+    } catch {
+      return { detail: text };
+    }
+  })();
+
+  return NextResponse.json(data, { status: res.status });
 }
