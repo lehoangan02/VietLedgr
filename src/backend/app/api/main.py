@@ -1,6 +1,6 @@
 from app.api.routes import (ai, auth, batch, expenses, invite_codes, ledger,
                             product, store, supplier, transactions, user,
-                            warehouse)
+                            warehouse, dashboard)
 from fastapi import APIRouter
 
 api_router = APIRouter()
@@ -17,3 +17,4 @@ api_router.include_router(ledger.router)
 api_router.include_router(transactions.router)
 api_router.include_router(invite_codes.router)
 api_router.include_router(ai.router)
+api_router.include_router(dashboard.router)
