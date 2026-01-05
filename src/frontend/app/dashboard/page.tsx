@@ -1,6 +1,7 @@
 "use client";
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Sidebar from '@/components/SideBar';
+import StoreSelector from '@/components/StoreSelector';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   ComposedChart, Line
@@ -56,8 +57,39 @@ const EXPIRING_ITEMS = [
 ];
 
 export default function Dashboard() {
-  const totalTax = 14500000;
-  const totalProfit = 84200000;
+  // Keep mock values as fallback while fetching from backend
+  const [categorySales, setCategorySales] = useState(CATEGORY_SALES);
+  const [monthlyPerformance, setMonthlyPerformance] = useState(MONTHLY_PERFORMANCE);
+  const [bestSellers, setBestSellers] = useState(BEST_SELLERS);
+  const [worstSellers, setWorstSellers] = useState(WORST_SELLERS);
+  const [lowStockItems, setLowStockItems] = useState(LOW_STOCK_ITEMS);
+  const [expiringItems, setExpiringItems] = useState(EXPIRING_ITEMS);
+
+  const [totalTax, setTotalTax] = useState<number>(14500000);
+  const [totalProfit, setTotalProfit] = useState<number>(84200000);
+
+  const [selectedStore, setSelectedStore] = useState<string | null>(process.env.NEXT_PUBLIC_STORE_ID || null);
+
+  useEffect(() => {
+    const storeId = selectedStore;
+    if (!storeId) return;
+
+    fetch(`/api/dashboard?store_id=${storeId}`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.category_sales) setCategorySales(data.category_sales);
+        if (data.monthly_performance) setMonthlyPerformance(data.monthly_performance);
+        if (data.best_sellers) setBestSellers(data.best_sellers);
+        if (data.worst_sellers) setWorstSellers(data.worst_sellers);
+        if (data.low_stock_items) setLowStockItems(data.low_stock_items);
+        if (data.expiring_items) setExpiringItems(data.expiring_items);
+        if (data.total_tax !== undefined) setTotalTax(Math.round(data.total_tax));
+        if (data.total_profit !== undefined) setTotalProfit(Math.round(data.total_profit));
+      })
+      .catch((err) => {
+        console.error('Dashboard fetch failed', err);
+      });
+  }, [selectedStore]);
 
   return (
     <div className="w-full max-w-screen-2xl mx-auto flex gap-6 font-sans min-h-screen bg-gray-50">
@@ -65,7 +97,7 @@ export default function Dashboard() {
       <main className="flex-1 p-8">
         <div className="max-w-7xl mx-auto">
           {/* Header */}
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4">
+          {/* <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4">
             <div>
               <h1 className="text-4xl font-bold text-gray-900 tracking-tight uppercase">Dashboard</h1>
               <p className="text-gray-500 mt-1 font-normal">Business Intelligence & Financial Overview</p>
@@ -80,22 +112,51 @@ export default function Dashboard() {
                 <p className="text-xl font-mono font-bold text-emerald-700">+38.2%</p>
               </div>
             </div>
+          </div> */}
+          {/* Header Section */}
+          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-10 gap-6">
+            <div>
+              <h1 className="text-4xl font-bold text-gray-900 tracking-tight uppercase">Dashboard</h1>
+              <p className="text-gray-500 mt-1 font-normal">Business Intelligence & Financial Overview</p>
+            </div>
+            
+            <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center w-full lg:w-auto">
+              {/* --- STORE SELECTOR INTEGRATION --- */}
+              <div className="bg-white p-2 rounded-2xl border border-gray-200 shadow-sm">
+                <StoreSelector 
+                  selected={selectedStore || ''} 
+                  onChange={setSelectedStore} 
+                />
+              </div>
+
+              {/* Financial Cards */}
+              <div className="flex gap-4 w-full sm:w-auto">
+                <div className="bg-gray-50 border border-gray-100 p-4 rounded-2xl flex-1 sm:flex-none">
+                  <p className="text-[10px] font-bold text-gray-400 uppercase">Tax Liability</p>
+                  <p className="text-xl font-mono font-bold text-gray-800">{totalTax.toLocaleString()} VND</p>
+                </div>
+                <div className="bg-emerald-50 border border-emerald-100 p-4 rounded-2xl flex-1 sm:flex-none">
+                  <p className="text-[10px] font-bold text-emerald-500 uppercase">YoY Profit Growth</p>
+                  <p className="text-xl font-mono font-bold text-emerald-700">+38.2%</p>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Monthly Performance */}
           <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm mb-8">
-            <h3 className="text-lg font-bold text-gray-800 mb-6 uppercase tracking-tight">Performance 2024 vs 2025</h3>
+            <h3 className="text-lg font-bold text-gray-800 mb-6 uppercase tracking-tight">Performance 2025 vs 2026</h3>
             <div className="h-96 w-full">
               <ResponsiveContainer width="100%" height="100%">
-                <ComposedChart data={MONTHLY_PERFORMANCE}>
+                <ComposedChart data={monthlyPerformance}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
                   <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 12, fontWeight: 700 }} />
                   <YAxis axisLine={false} tickLine={false} tickFormatter={(val) => `${val}M`} />
                   <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px rgba(0,0,0,0.1)' }} />
-                  <Bar dataKey="rev25" name="Revenue 2025" fill={REV_25} radius={[4, 4, 0, 0]} barSize={35} />
-                  <Line type="monotone" dataKey="rev24" name="Revenue 2024" stroke={REV_24} strokeWidth={2} strokeDasharray="5 5" dot={false} />
-                  <Line type="monotone" dataKey="prof25" name="Profit 2025" stroke={PROFIT_25} strokeWidth={3} dot={{ r: 4 }} />
-                  <Line type="monotone" dataKey="prof24" name="Profit 2024" stroke={PROFIT_24} strokeWidth={2} dot={{ r: 4, fill: '#fff' }} />
+                  <Bar dataKey="rev2025" name="Revenue 2025" fill={REV_25} radius={[4, 4, 0, 0]} barSize={35} />
+                  <Line type="monotone" dataKey="rev2026" name="Revenue 2026" stroke={REV_24} strokeWidth={2} strokeDasharray="5 5" dot={false} />
+                  <Line type="monotone" dataKey="prof2025" name="Profit 2025" stroke={PROFIT_25} strokeWidth={3} dot={{ r: 4 }} />
+                  <Line type="monotone" dataKey="prof2026" name="Profit 2026" stroke={PROFIT_24} strokeWidth={2} dot={{ r: 4, fill: '#fff' }} />
                 </ComposedChart>
               </ResponsiveContainer>
             </div>
@@ -106,7 +167,7 @@ export default function Dashboard() {
             <div className="bg-white p-6 rounded-2xl border border-emerald-100 shadow-sm">
               <h3 className="text-sm font-bold text-emerald-600 uppercase tracking-widest mb-4">🏆 Top Sellers</h3>
               <div className="space-y-4">
-                {BEST_SELLERS.map((item, i) => (
+                {bestSellers.map((item, i) => (
                   <div key={i} className="flex justify-between items-center p-3 bg-emerald-50/20 rounded-xl border border-emerald-50">
                     <div>
                       <p className="text-sm font-semibold text-gray-800">{item.name}</p>
@@ -139,7 +200,7 @@ export default function Dashboard() {
               <h3 className="text-lg font-bold text-gray-800 mb-6 uppercase tracking-tight">Category Contribution</h3>
               <div className="h-64 w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={CATEGORY_SALES}>
+                  <BarChart data={categorySales}>
                     <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontWeight: 700 }} />
                     <YAxis axisLine={false} tickLine={false} />
                     <Bar dataKey="sales" fill="#3b82f6" radius={[4, 4, 0, 0]} />
