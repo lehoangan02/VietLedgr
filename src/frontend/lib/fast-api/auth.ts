@@ -17,7 +17,7 @@ export async function postLogin(requestBody: FormData) {
   return data;
 }
 export async function postLogout() {
-  const res = await fetch("api/auth/logout", {
+  const res = await fetch("/api/auth/logout", {
     method: "POST",
   });
   if (!res.ok) {
