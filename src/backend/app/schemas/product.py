@@ -21,6 +21,7 @@ class ProductUpdate(BaseModel):
   name: str | None = Field(None, min_length=1, max_length=255)
   description: str | None = Field(None, max_length=1000)
   category_id: UUID | None = Field(None)
+  image_base64: str | None = Field(None) 
   
 class ProductResponse(ProductBase):
   product_id: UUID
