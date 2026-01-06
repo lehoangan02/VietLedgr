@@ -25,7 +25,7 @@ export default function Sidebar() {
       items: ["General Ledger", "Expenses", "Invest", "Draw Money"],
     },
     { title: "Locations", items: ["Stores", "Warehouses"] },
-    { title: "Partners", items: ["Customers", "Suppliers"] },
+    { title: "Partners", items: ["Customers Support", "Suppliers"] },
     { title: "AI", items: ["Generate Report"] },
     { title: "Settings", items: ["Advanced"] },
   ];
@@ -38,7 +38,7 @@ export default function Sidebar() {
     'Sales Management': '/sales',
     'Stores': '/stores',
     'Warehouses': '/warehouses',
-    'Customers': '/customers',
+    'Customers Support': '/customers-support',
     'Suppliers': '/suppliers',
     'Advanced': '/settings',
     'General Ledger': '/ledger',
