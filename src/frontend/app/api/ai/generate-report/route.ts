@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
+import { cookies } from "next/headers";
 
 const FASTAPI_URL = process.env.FASTAPI_URL!;
+
 
 function extractBase64(img: any): string | null {
 	if (!img) return null
@@ -18,10 +20,16 @@ function extractBase64(img: any): string | null {
 export async function POST(request: Request) {
 	const body = await request.json().catch(() => ({}))
 
+	const cookieStore = await cookies();
+  	const accessToken = cookieStore.get("access_token")?.value;
+
 	const resp = await fetch(
         `${FASTAPI_URL}/api/ai/generate-report`, {
 		method: 'POST',
-		headers: { 'Content-Type': 'application/json' },
+		headers: { 
+			'Content-Type': 'application/json' ,
+			'Authorization': `Bearer ${accessToken}`
+		},
 		body: JSON.stringify(body),
 	})
 
