@@ -40,16 +40,37 @@
 
 ---
 
-### Test Case 1.4: Register Form - Successful Registration
-**Precondition**: User has valid invite code
+### Test Case 1.4: Complete User Registration Flow (Admin + New User)
+**Precondition**: Admin account exists
 
-**Steps**:
+**Admin Steps - Generate Invite Code**:
+1. Login as admin (username: `admin`, password: `admin123`)
+2. Navigate to `/invite-code`
+3. Click "Create New Invite Code" button
+4. Navigate to `/invite-code/new`
+5. Enter name for new user (e.g., "John Doe")
+6. Enter email for new user (e.g., "john@example.com")
+7. Select role (Admin/Manager/Cashier)
+8. Click "Generate Invite Code"
+9. Copy the generated invite code
+10. Logout from admin account
+
+**New User Steps - Registration**:
 1. Navigate to `/register`
-2. Fill in all required fields (name, username, invite code, password, confirm password)
-3. Check "I agree" checkbox
-4. Click register button
+2. Enter name (e.g., "John Doe")
+3. Enter username (e.g., "johndoe")
+4. Paste the invite code from admin
+5. Enter password
+6. Enter matching password in confirm password field
+7. Check "I agree to Terms & Privacy" checkbox
+8. Click "Register" button
 
-**Expected Result**:  Account is created and user is redirected to login
+**Expected Result**: 
+- Admin successfully generates invite code
+- Invite code is displayed with role and store information
+- New user account is created successfully
+- Success message "Registration successful!" is shown
+- User is redirected to `/dashboard`
 
 ---
 
