@@ -1,6 +1,7 @@
 "use client";
 import React, { useEffect, useMemo, useState } from "react";
 import { Edit3, Trash2, Plus } from "lucide-react";
+import Sidebar from "@/components/SideBar";
 
 type Supplier = {
   id: string;
@@ -294,10 +295,13 @@ export default function Page() {
   }
 
   return (
-    <div className="p-6">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-semibold">Suppliers</h1>
+    <div className="w-full max-w-screen-2xl mx-auto flex gap-6 min-h-screen bg-gray-50">
+      <Sidebar />
+      <main className="flex-1">
+        <div className="p-6">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h1 className="text-2xl font-semibold">Suppliers</h1>
           <div className="text-sm text-gray-500">
             Manage suppliers and their details
           </div>
@@ -528,6 +532,8 @@ export default function Page() {
           )}
         </aside>
       </div>
+        </div>
+      </main>
     </div>
   );
 }
