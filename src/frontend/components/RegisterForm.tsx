@@ -1,52 +1,50 @@
-'use client'
-import React, { useState } from 'react'
-import { Facebook, Github, Eye, EyeOff } from 'lucide-react'
-import { GoogleIcon } from '@/components/GoogleIcon'
-import { useRouter } from 'next/navigation'
-import { postSignup } from '@/lib/fast-api/auth'
+"use client";
+import React, { useState } from "react";
+import { Facebook, Github, Eye, EyeOff } from "lucide-react";
+import { GoogleIcon } from "@/components/GoogleIcon";
+import { useRouter } from "next/navigation";
+import { postSignup } from "@/lib/fast-api/auth";
 export default function RegisterForm() {
-  const [name, setName] = useState('')
-  const [username, setUsername] = useState('')
-  const [inviteCode, setInviteCode] = useState('')
-  const [password, setPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
-  const [agree, setAgree] = useState(true)
-  const [showPassword, setShowPassword] = useState(false)
-  const [showConfirm, setShowConfirm] = useState(false)
-  const [error, setError] = useState('')
-  const router = useRouter()
+  const [name, setName] = useState("");
+  const [username, setUsername] = useState("");
+  const [inviteCode, setInviteCode] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [agree, setAgree] = useState(true);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [error, setError] = useState("");
+  const router = useRouter();
 
   async function onSubmit(e: React.FormEvent) {
-    e.preventDefault()
+    e.preventDefault();
     router.refresh();
     if (!agree) {
-      setError('You must agree to the Terms & Privacy')
-      return
+      setError("You must agree to the Terms & Privacy");
+      return;
     }
 
     if (password !== confirmPassword) {
-      setError('Passwords do not match')
-      return
+      setError("Passwords do not match");
+      return;
     }
 
     if (!inviteCode || inviteCode.trim().length === 0) {
-      setError('Invite code is required')
-      return
+      setError("Invite code is required");
+      return;
     }
 
-    setError('')
+    setError("");
 
     try {
       await postSignup({
         username,
         password,
         invite_code: inviteCode.trim(),
-      })
-
-      alert('Registration successful!')
-      router.push('/dashboard')
+      });
+      router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred')
+      setError(err instanceof Error ? err.message : "An error occurred");
     }
   }
 
@@ -68,7 +66,7 @@ export default function RegisterForm() {
           </label>
           <input
             value={name}
-            onChange={e => setName(e.target.value)}
+            onChange={(e) => setName(e.target.value)}
             required
             className="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-300"
           />
@@ -80,7 +78,7 @@ export default function RegisterForm() {
           </label>
           <input
             value={username}
-            onChange={e => setUsername(e.target.value)}
+            onChange={(e) => setUsername(e.target.value)}
             required
             className="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-300"
           />
@@ -92,7 +90,7 @@ export default function RegisterForm() {
           </label>
           <input
             value={inviteCode}
-            onChange={e => setInviteCode(e.target.value)}
+            onChange={(e) => setInviteCode(e.target.value)}
             required
             autoCapitalize="none"
             autoCorrect="off"
@@ -111,16 +109,16 @@ export default function RegisterForm() {
           </label>
           <div className="relative">
             <input
-              type={showPassword ? 'text' : 'password'}
+              type={showPassword ? "text" : "password"}
               value={password}
-              onChange={e => setPassword(e.target.value)}
+              onChange={(e) => setPassword(e.target.value)}
               required
               className="w-full border rounded-md px-3 py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-orange-300"
             />
             <button
               type="button"
-              onClick={() => setShowPassword(s => !s)}
-              aria-label={showPassword ? 'Hide password' : 'Show password'}
+              onClick={() => setShowPassword((s) => !s)}
+              aria-label={showPassword ? "Hide password" : "Show password"}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 p-1"
             >
               {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
@@ -134,16 +132,18 @@ export default function RegisterForm() {
           </label>
           <div className="relative">
             <input
-              type={showConfirm ? 'text' : 'password'}
+              type={showConfirm ? "text" : "password"}
               value={confirmPassword}
-              onChange={e => setConfirmPassword(e.target.value)}
+              onChange={(e) => setConfirmPassword(e.target.value)}
               required
               className="w-full border rounded-md px-3 py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-orange-300"
             />
             <button
               type="button"
-              onClick={() => setShowConfirm(s => !s)}
-              aria-label={showConfirm ? 'Hide confirm password' : 'Show confirm password'}
+              onClick={() => setShowConfirm((s) => !s)}
+              aria-label={
+                showConfirm ? "Hide confirm password" : "Show confirm password"
+              }
               className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 p-1"
             >
               {showConfirm ? <EyeOff size={18} /> : <Eye size={18} />}
@@ -156,11 +156,14 @@ export default function RegisterForm() {
             <input
               type="checkbox"
               checked={agree}
-              onChange={e => setAgree(e.target.checked)}
+              onChange={(e) => setAgree(e.target.checked)}
               className="mr-2"
             />
             <span className="text-sm">
-              I agree to the <a className="text-orange-500 hover:underline" href="#">Terms & Privacy</a>
+              I agree to the{" "}
+              <a className="text-orange-500 hover:underline" href="#">
+                Terms & Privacy
+              </a>
             </span>
           </label>
         </div>
@@ -175,10 +178,10 @@ export default function RegisterForm() {
       </form>
 
       <p className="text-sm text-gray-500 mt-4">
-        Already have an account?{' '}
+        Already have an account?{" "}
         <button
           type="button"
-          onClick={() => router.push('/login')}
+          onClick={() => router.push("/login")}
           className="text-orange-500 hover:underline"
         >
           Sign In Instead
@@ -216,5 +219,5 @@ export default function RegisterForm() {
         </button>
       </div>
     </div>
-  )
+  );
 }
