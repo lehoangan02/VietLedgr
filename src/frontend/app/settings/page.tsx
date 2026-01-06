@@ -75,14 +75,14 @@ export default function SettingsPage() {
   ];
 
   return (
-    <div className="w-full max-w-screen-2xl mx-auto flex gap-6 min-h-screen bg-gray-50 text-gray-800">
+    <div className="w-full max-w-screen-2xl mx-auto flex gap-6 min-h-screen bg-background text-foreground">
       <Sidebar />
       <main className="flex-1">
         <div className="p-6">
           <div className="flex items-center justify-between mb-6">
             <div>
               <h1 className="text-2xl font-semibold">Settings</h1>
-              <div className="text-sm text-gray-500">
+              <div className="text-sm text-muted-foreground">
                 Personalize your dashboard experience
               </div>
             </div>
@@ -91,9 +91,9 @@ export default function SettingsPage() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Main Content: Theme Selection */}
             <div className="lg:col-span-2 space-y-6">
-              <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
+              <div className="bg-card rounded-lg shadow-sm border border-border p-6">
                 <h3 className="text-lg font-medium mb-4">Appearance</h3>
-                <p className="text-sm text-gray-500 mb-6">
+                <p className="text-sm text-muted-foreground mb-6">
                   Select how the interface looks to you. This change will be applied across all dashboard tabs.
                 </p>
 
@@ -105,7 +105,7 @@ export default function SettingsPage() {
                       className={`relative flex flex-col items-center p-5 rounded-xl border-2 transition-all text-left ${
                         theme === card.id
                           ? "border-orange-400 bg-orange-50/50"
-                          : "border-gray-100 bg-white hover:border-gray-200"
+                          : "border-border bg-card hover:border-border/80"
                       }`}
                     >
                       {theme === card.id && (
@@ -113,11 +113,11 @@ export default function SettingsPage() {
                           <CheckCircle2 size={18} fill="currentColor" className="text-white" />
                         </div>
                       )}
-                      <div className={`mb-3 p-3 rounded-full ${theme === card.id ? "bg-orange-400 text-white" : "bg-gray-100 text-gray-500"}`}>
+                      <div className={`mb-3 p-3 rounded-full ${theme === card.id ? "bg-orange-400 text-white" : "bg-muted text-muted-foreground"}`}>
                         {card.icon}
                       </div>
                       <span className="font-semibold text-sm mb-1">{card.label}</span>
-                      <span className="text-[11px] text-gray-400 text-center leading-relaxed">
+                      <span className="text-[11px] text-muted-foreground text-center leading-relaxed">
                         {card.description}
                       </span>
                     </button>
@@ -126,19 +126,19 @@ export default function SettingsPage() {
               </div>
 
               {/* Decorative Empty Section for UI consistency */}
-              <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6 opacity-60">
-                <h3 className="text-lg font-medium mb-2 text-gray-400 italic">Advanced Settings</h3>
-                <div className="h-4 w-1/3 bg-gray-100 rounded animate-pulse" />
+              <div className="bg-card rounded-lg shadow-sm border border-border p-6 opacity-60">
+                <h3 className="text-lg font-medium mb-2 text-muted-foreground italic">Advanced Settings</h3>
+                <div className="h-4 w-1/3 bg-muted rounded animate-pulse" />
               </div>
             </div>
 
             {/* Save Sidebar */}
-            <aside className="bg-white rounded-lg shadow-sm border border-gray-100 p-5 h-fit sticky top-6">
+            <aside className="bg-card rounded-lg shadow-sm border border-border p-5 h-fit sticky top-6">
               <h2 className="text-lg font-semibold mb-4">Update Configuration</h2>
               
               <div className="space-y-4">
-                <div className="p-3 bg-gray-50 rounded-md border border-gray-100">
-                  <div className="text-[10px] uppercase font-bold text-gray-400 mb-1">Active Selection</div>
+                <div className="p-3 bg-muted rounded-md border border-border">
+                  <div className="text-[10px] uppercase font-bold text-muted-foreground mb-1">Active Selection</div>
                   <div className="flex items-center gap-2 capitalize text-sm font-medium">
                     <span className="w-2 h-2 rounded-full bg-orange-400" />
                     {theme} Mode
@@ -162,7 +162,7 @@ export default function SettingsPage() {
                 </div>
 
                 <div className="pt-4 border-t border-gray-100">
-                  <p className="text-[11px] text-gray-400">
+                  <p className="text-[11px] text-muted-foreground">
                     Choosing "System" will automatically update your theme when your OS schedule changes.
                   </p>
                 </div>
