@@ -4,7 +4,7 @@ import { ChevronDown, ChevronRight } from "lucide-react";
 import { useRouter, usePathname } from "next/navigation";
 import { postLogout } from "@/lib/fast-api/auth";
 
-export default function Sidebar() {
+export default function Sidebar(role: { role: string | undefined }) {
   const router = useRouter();
   const pathname = usePathname();
 
@@ -12,33 +12,55 @@ export default function Sidebar() {
     { title: "Main", items: ["Dashboard Report", "Manage Invite Code"] },
     { title: "Inventory", items: ["Products"] },
     {
-      title: "Stock & Purchases",
-      items: [
-        "Stock Transfer",
-        "Purchase Orders",
-        "Purchase Returns",
-      ],
+      title: "Purchases",
+      items: ["Purchase Orders", "Purchase Returns"],
     },
     { title: "Sales", items: ["Sales Management"] },
     {
       title: "Ledger",
-      items: ["General Ledger", "Trial Balance", "Balance Sheet", "Expenses", "Invest", "Draw Money"],
+      items: ["General Ledger", "Expenses", "Invest", "Draw Money"],
     },
     { title: "Locations", items: ["Stores", "Warehouses"] },
-    { title: "Partners", items: ["Customers", "Suppliers"] },
+    { title: "Partners", items: ["Suppliers"] },
     { title: "AI", items: ["Generate Report"] },
     { title: "Settings", items: ["Advanced"] },
   ];
+  console.log("User role in Sidebar:", role);
+
+  // Managers do NOT see "Partners" or "AI"
+  const managerOrder = ["Main", "Inventory", "Purchases", "Sales", "Ledger", "Locations"]
+
+  const allowedSections: Record<string, string[]> = {
+    admin: sections.map((s) => s.title), // all sections for admin
+    manager: managerOrder
+  };
+  // For manager, filter Locations items to only "Warehouses"
+  let filteredSections = sections.filter(
+    (s) => allowedSections[role.role ?? "manager"].includes(s.title)
+  );
+  if (role.role === "manager") {
+    filteredSections = filteredSections.map((section) => {
+      if (section.title === "Locations") {
+        return { ...section, items: ["Warehouses"] };
+      }
+      return section;
+    });
+  }
+
+  const orderedSections =
+    role.role === "manager"
+      ? managerOrder
+        .map((title) => filteredSections.find((s) => s.title === title))
+        .filter(Boolean)
+      : filteredSections;
 
   const routeMap: Record<string, string> = {
     'Dashboard Report': '/dashboard',
     'Manage Invite Code': '/invite-code',
     'Products': '/products',
-    'Manage Stock': '/purchases/manage-stock',
     'Sales Management': '/sales',
     'Stores': '/stores',
     'Warehouses': '/warehouses',
-    'Customers': '/customers',
     'Suppliers': '/suppliers',
     'Advanced': '/settings',
     'General Ledger': '/ledger',
@@ -99,7 +121,7 @@ export default function Sidebar() {
       <div className="sticky top-6">
         <div className="text-2xl font-semibold mb-6">VietLedgr</div>
 
-        {sections.map((s) => {
+        {orderedSections.map((s: any) => {
           const isOpen = !!open[s.title];
           return (
             <div key={s.title} className="mb-4">
@@ -137,7 +159,7 @@ export default function Sidebar() {
                       No items
                     </li>
                   )}
-                  {s.items.map((it) => {
+                  {s.items.map((it: any) => {
                     const route = routeMap[it];
                     const isActive = route && pathname.startsWith(route);
                     return (
@@ -152,8 +174,8 @@ export default function Sidebar() {
                         role={route ? "button" : undefined}
                         tabIndex={route ? 0 : undefined}
                         className={`flex items-center text-sm px-3 py-2 rounded-md hover:bg-orange-50 ${isActive
-                            ? "bg-orange-50 font-medium text-orange-600"
-                            : "text-gray-700"
+                          ? "bg-orange-50 font-medium text-orange-600"
+                          : "text-gray-700"
                           } cursor-pointer`}
                       >
                         <span className="flex-1">{it}</span>
