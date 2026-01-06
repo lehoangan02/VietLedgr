@@ -22,7 +22,7 @@ export default function Sidebar() {
     { title: "Sales", items: ["Sales Management"] },
     {
       title: "Ledger",
-      items: ["General Ledger", "Trial Balance", "Balance Sheet", "Expenses", "Invest", "Draw Money"],
+      items: ["General Ledger", "Expenses", "Invest", "Draw Money"],
     },
     { title: "Locations", items: ["Stores", "Warehouses"] },
     { title: "Partners", items: ["Customers", "Suppliers"] },
