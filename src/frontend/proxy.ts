@@ -1,26 +1,34 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from "next/server";
+import { getCurrentUser } from "./lib/fast-api/user";
 
-export function proxy(request: NextRequest) {
-    const { pathname } = request.nextUrl
+export async function proxy(request: NextRequest) {
+  const { pathname } = request.nextUrl;
 
-    const accessToken = request.cookies.get('access_token')?.value
+  const isAuthRoute =
+    pathname.startsWith("/login") || pathname.startsWith("/register");
 
-    const isRootRoute = pathname === '/' || pathname === ''
-    if (isRootRoute) {
-        const redirectTarget = accessToken ? '/dashboard' : '/login'
-        return NextResponse.redirect(new URL(redirectTarget, request.url))
-    }
+  const currentUser = await getCurrentUser();
 
-    const isAuthRoute = pathname.startsWith('/login') || pathname.startsWith('/register')
-    if (accessToken && isAuthRoute) {
-        return NextResponse.redirect(new URL('/dashboard', request.url))
-    }
+  if (!currentUser) {
+    if (isAuthRoute) return NextResponse.next();
+    return NextResponse.redirect(new URL("/login", request.url));
+  }
 
-    return NextResponse.next()
+  const redirectTarget =
+    currentUser.role?.toLowerCase() === "cashier" ? "/pos" : "/dashboard";
+
+  if (isAuthRoute) {
+    return NextResponse.redirect(new URL(redirectTarget, request.url));
+  }
+
+  const isRootRoute = pathname === "/" || pathname === "";
+  if (isRootRoute) {
+    return NextResponse.redirect(new URL(redirectTarget, request.url));
+  }
+
+  return NextResponse.next();
 }
 
 export const config = {
-    matcher: [
-        '/((?!api|_next/static|_next/image|favicon.ico).*)',
-    ],
-}
+  matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
+};

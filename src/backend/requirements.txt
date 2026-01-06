@@ -1,5 +1,6 @@
 alembic==1.17.0
 annotated-doc==0.0.2
+email-validator
 annotated-types==0.7.0
 anyio==4.11.0
 argon2-cffi==25.1.0
@@ -31,3 +32,4 @@ starlette==0.48.0
 typing-inspection==0.4.2
 typing_extensions==4.15.0
 uvicorn==0.38.0
+google-genai

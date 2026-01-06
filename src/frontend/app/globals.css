@@ -17,8 +17,6 @@ body,
 .app {
   height: 100%;
   width: 100%;
-  @apply bg-gray-50;
-  @apply text-gray-900;
   @apply text-sm;
 }
 
@@ -160,6 +158,10 @@ body,
 }
 
 @layer base {
+  html {
+    @apply bg-background text-foreground;
+  }
+
   * {
     @apply border-border outline-ring/50;
   }
@@ -167,4 +169,29 @@ body,
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* Dark-mode fallbacks for legacy light-tailwind classes */
+.dark :where([class*="bg-white"]) {
+  background-color: var(--card) !important;
+}
+
+.dark :where([class*="bg-gray-50"]) {
+  background-color: var(--background) !important;
+}
+
+.dark :where([class*="border-gray-100"],[class*="border-gray-200"]) {
+  border-color: var(--border) !important;
+}
+
+.dark :where([class*="text-gray-400"],[class*="text-gray-500"]) {
+  color: var(--muted-foreground) !important;
+}
+
+.dark :where([class*="text-gray-700"],[class*="text-gray-800"],[class*="text-gray-900"]) {
+  color: var(--foreground) !important;
+}/* Improve hover contrast for orange hover states (sidebar, lists) in dark mode */
+.dark :where([class*="hover:bg-orange-50"]):hover {
+  background-color: color-mix(in oklch, var(--primary) 12%, transparent) !important;
+  color: var(--foreground) !important;
 }
