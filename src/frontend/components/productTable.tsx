@@ -220,77 +220,79 @@ export default function ProductTable({
                   </tr>
                </thead>
                <tbody className="divide-y divide-gray-50">
-                  {visible.length > 0 ? visible.map((p, i) => (
-                     <tr key={p.product_id} className="group hover:bg-orange-50/30 transition-colors">
-                        <td className="py-4 pl-3 text-gray-400">{(page - 1) * pageSize + i + 1}</td>
-                        <td className="py-4">
-                           <div className="flex items-center gap-4">
-                              <div className="w-11 h-11 flex-shrink-0 bg-gray-100 rounded-lg flex items-center justify-center overflow-hidden">
-                                 {p.image_base64 ? (
-                                    <img
-                                       src={`data:image/png;base64,${p.image_base64}`}
-                                       alt={p.name}
-                                       className="w-full h-full object-cover"
+                  {visible.length > 0 ? visible.map((p, i) => {
+                     console.log('Product SKU:', p.sku);
+                     return (
+                        <tr key={p.product_id} className="group hover:bg-orange-50/30 transition-colors">
+                           <td className="py-4 pl-3 text-gray-400">{(page - 1) * pageSize + i + 1}</td>
+                           <td className="py-4">
+                              <div className="flex items-center gap-4">
+                                 <div className="w-11 h-11 flex-shrink-0 bg-gray-100 rounded-lg flex items-center justify-center overflow-hidden">
+                                    {p.image_base64 ? (
+                                       <img
+                                          src={p.image_base64.startsWith('data:image') ? p.image_base64 : `data:image/png;base64,${p.image_base64}`}
+                                          alt={p.name}
+                                          className="w-full h-full object-cover" />
+                                    ) : (
+                                       <Package className="text-gray-300" size={20} />
+                                    )}
+                                 </div>
+                                 <div>
+                                    <div className="font-medium text-gray-800">{p.name}</div>
+                                    <div className="text-xs text-gray-400">{p.product_id}</div>
+                                 </div>
+                              </div>
+                           </td>
+                           <td className="py-4">
+                              <span className="px-2.5 py-1 bg-gray-100 text-gray-600 rounded-full text-[11px] font-bold uppercase tracking-tight">
+                                 {p.retail_category || 'Uncategorized'}
+                              </span>
+                           </td>
+                           <td className="py-4 font-semibold text-gray-900">{p.price}</td>
+                           <td className="py-4">
+                              <div className="flex flex-col gap-1">
+                                 <span className="text-gray-700 font-medium">{p.qty} {p.unit || 'Pcs'}</span>
+                                 <div className="w-24 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                                    <div
+                                       className={`h-full ${Number(p.qty) < 20 ? 'bg-red-500' : 'bg-green-500'}`}
+                                       style={{ width: `${Math.min(100, (Number(p.qty) / 100) * 100)}%` }}
                                     />
-                                 ) : (
-                                    <Package className="text-gray-300" size={20} />
-                                 )}
+                                 </div>
                               </div>
-                              <div>
-                                 <div className="font-medium text-gray-800">{p.name}</div>
-                                 <div className="text-xs text-gray-400">{p.product_id}</div>
+                           </td>
+                           <td className="py-4">
+                              {p.expected_out_days ? (
+                                 <div className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${p.expected_out_days <= 7 ? 'bg-red-50 text-red-600' : 'bg-yellow-50 text-yellow-700'}`}>
+                                    {p.expected_out_days} days
+                                 </div>
+                              ) : (
+                                 <span className="text-gray-300">—</span>
+                              )}
+                           </td>
+                           <td className="py-4 pr-3 text-right">
+                              <div className="inline-flex items-center gap-1">
+                                 <button title="View" className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md">
+                                    <Eye size={16} />
+                                 </button>
+                                 <button
+                                    title="Edit"
+                                    className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-md"
+                                    onClick={() => router.push(`/products/edit-product/${p.product_id}`)}
+                                 >
+                                    <Edit3 size={16} />
+                                 </button>
+                                 <button
+                                    title="Delete"
+                                    onClick={() => handleDelete(p.product_id, p.sku)}
+                                    className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md"
+                                 >
+                                    <Trash2 size={16} />
+                                 </button>
                               </div>
-                           </div>
-                        </td>
-                        <td className="py-4">
-                           <span className="px-2.5 py-1 bg-gray-100 text-gray-600 rounded-full text-[11px] font-bold uppercase tracking-tight">
-                              {p.retail_category || 'Uncategorized'}
-                           </span>
-                        </td>
-                        <td className="py-4 font-semibold text-gray-900">{p.price}</td>
-                        <td className="py-4">
-                           <div className="flex flex-col gap-1">
-                              <span className="text-gray-700 font-medium">{p.qty} {p.unit || 'Pcs'}</span>
-                              <div className="w-24 h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                                 <div
-                                    className={`h-full ${Number(p.qty) < 20 ? 'bg-red-500' : 'bg-green-500'}`}
-                                    style={{ width: `${Math.min(100, (Number(p.qty) / 100) * 100)}%` }}
-                                 />
-                              </div>
-                           </div>
-                        </td>
-                        <td className="py-4">
-                           {p.expected_out_days ? (
-                              <div className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${p.expected_out_days <= 7 ? 'bg-red-50 text-red-600' : 'bg-yellow-50 text-yellow-700'}`}>
-                                 {p.expected_out_days} days
-                              </div>
-                           ) : (
-                              <span className="text-gray-300">—</span>
-                           )}
-                        </td>
-                        <td className="py-4 pr-3 text-right">
-                           <div className="inline-flex items-center gap-1">
-                              <button title="View" className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md">
-                                 <Eye size={16} />
-                              </button>
-                              <button
-                                 title="Edit"
-                                 className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-md"
-                                 onClick={() => router.push(`/products/edit-product?id=${p.product_id}`)}
-                              >
-                                 <Edit3 size={16} />
-                              </button>
-                              <button
-                                 title="Delete"
-                                 onClick={() => handleDelete(p.product_id, p.sku)}
-                                 className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md"
-                              >
-                                 <Trash2 size={16} />
-                              </button>
-                           </div>
-                        </td>
-                     </tr>
-                  )) : (
+                           </td>
+                        </tr>
+                     )
+                  }) : (
                      <tr>
                         <td colSpan={7} className="py-20 text-center text-gray-400 italic">
                            No products found.
