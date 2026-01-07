@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { useRouter, usePathname } from "next/navigation";
 import { postLogout } from "@/lib/fast-api/auth";
+import Image from "next/image";
 
 export default function Sidebar() {
   const router = useRouter();
@@ -97,7 +98,14 @@ export default function Sidebar() {
   return (
     <aside className="w-64 pr-6">
       <div className="sticky top-6">
-        <div className="text-2xl font-semibold mb-6">VietLedgr</div>
+        <div className="flex items-center gap-2 mb-6">
+          <img
+            src="/favicon.png"
+            alt="VietLedgr"
+            className="w-7 h-7"
+          />
+          <span className="text-2xl font-semibold">VietLedgr</span>
+        </div>
 
         {sections.map((s) => {
           const isOpen = !!open[s.title];
