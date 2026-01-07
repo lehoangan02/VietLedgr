@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { useRouter, usePathname } from "next/navigation";
 import { postLogout } from "@/lib/fast-api/auth";
+import Image from "next/image";
 
 export default function Sidebar() {
   const router = useRouter();
@@ -22,10 +23,10 @@ export default function Sidebar() {
     { title: "Sales", items: ["Sales Management"] },
     {
       title: "Ledger",
-      items: ["General Ledger", "Trial Balance", "Balance Sheet", "Expenses", "Invest", "Draw Money"],
+      items: ["General Ledger", "Expenses", "Invest", "Draw Money"],
     },
     { title: "Locations", items: ["Stores", "Warehouses"] },
-    { title: "Partners", items: ["Customers", "Suppliers"] },
+    { title: "Partners", items: ["Customers Support", "Suppliers"] },
     { title: "AI", items: ["Generate Report"] },
     { title: "Settings", items: ["Advanced"] },
   ];
@@ -38,7 +39,7 @@ export default function Sidebar() {
     'Sales Management': '/sales',
     'Stores': '/stores',
     'Warehouses': '/warehouses',
-    'Customers': '/customers',
+    'Customers Support': '/customers-support',
     'Suppliers': '/suppliers',
     'Advanced': '/settings',
     'General Ledger': '/ledger',
@@ -97,7 +98,14 @@ export default function Sidebar() {
   return (
     <aside className="w-64 pr-6">
       <div className="sticky top-6">
-        <div className="text-2xl font-semibold mb-6">VietLedgr</div>
+        <div className="flex items-center gap-2 mb-6">
+          <img
+            src="/favicon.png"
+            alt="VietLedgr"
+            className="w-7 h-7"
+          />
+          <span className="text-2xl font-semibold">VietLedgr</span>
+        </div>
 
         {sections.map((s) => {
           const isOpen = !!open[s.title];
