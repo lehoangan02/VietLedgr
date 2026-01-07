@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { useRouter, usePathname } from "next/navigation";
 import { postLogout } from "@/lib/fast-api/auth";
+import Image from "next/image";
 
 export default function Sidebar(role: { role: string | undefined }) {
   const router = useRouter();
@@ -21,14 +22,14 @@ export default function Sidebar(role: { role: string | undefined }) {
       items: ["General Ledger", "Expenses", "Invest", "Draw Money"],
     },
     { title: "Locations", items: ["Stores", "Warehouses"] },
-    { title: "Partners", items: ["Suppliers"] },
+    { title: "Partners", items: ["Brands", "Suppliers"] },
     { title: "AI", items: ["Generate Report"] },
     { title: "Settings", items: ["Advanced"] },
   ];
   console.log("User role in Sidebar:", role);
 
   // Managers do NOT see "Partners" or "AI"
-  const managerOrder = ["Main", "Inventory", "Purchases", "Sales", "Ledger", "Locations"]
+  const managerOrder = ["Main", "Inventory", "Purchases", "Sales", "Ledger", "Locations", "Settings"];
 
   const allowedSections: Record<string, string[]> = {
     admin: sections.map((s) => s.title), // all sections for admin
@@ -61,6 +62,7 @@ export default function Sidebar(role: { role: string | undefined }) {
     'Sales Management': '/sales',
     'Stores': '/stores',
     'Warehouses': '/warehouses',
+    'Customers Support': '/customers-support',
     'Suppliers': '/suppliers',
     'Advanced': '/settings',
     'General Ledger': '/ledger',
@@ -119,7 +121,14 @@ export default function Sidebar(role: { role: string | undefined }) {
   return (
     <aside className="w-64 pr-6">
       <div className="sticky top-6">
-        <div className="text-2xl font-semibold mb-6">VietLedgr</div>
+        <div className="flex items-center gap-2 mb-6">
+          <img
+            src="/favicon.png"
+            alt="VietLedgr"
+            className="w-7 h-7"
+          />
+          <span className="text-2xl font-semibold">VietLedgr</span>
+        </div>
 
         {orderedSections.map((s: any) => {
           const isOpen = !!open[s.title];
