@@ -263,8 +263,8 @@ export default function PosPage() {
   }, []);
 
   const generateQR = useCallback((total: number, print?: boolean) => {
-    const bankBin = "970422";
-    const accountNumber = "0898925210";
+    const bankBin = "970418";
+    const accountNumber = "5660567183";
     const description = encodeURIComponent("Payment");
     const url = `https://img.vietqr.io/image/${bankBin}-${accountNumber}-qr_only.png?amount=${Math.round(
       total,
@@ -393,11 +393,10 @@ export default function PosPage() {
             <div className="mb-4 flex items-center gap-2">
               <button
                 onClick={() => setCategory(null)}
-                className={`px-3 py-2 rounded ${
-                  category === null
-                    ? "bg-orange-500 text-white"
-                    : "bg-white border"
-                }`}
+                className={`px-3 py-2 rounded ${category === null
+                  ? "bg-orange-500 text-white"
+                  : "bg-white border"
+                  }`}
               >
                 All Categories
               </button>
@@ -405,11 +404,10 @@ export default function PosPage() {
                 <button
                   key={c}
                   onClick={() => setCategory((prev) => (prev === c ? null : c))}
-                  className={`px-3 py-2 rounded ${
-                    category === c
-                      ? "bg-orange-500 text-white"
-                      : "bg-white border"
-                  }`}
+                  className={`px-3 py-2 rounded ${category === c
+                    ? "bg-orange-500 text-white"
+                    : "bg-white border"
+                    }`}
                 >
                   {c}
                 </button>
@@ -556,22 +554,20 @@ export default function PosPage() {
                   <div className="grid grid-cols-3 gap-2">
                     <button
                       onClick={() => handleSetPayment("cash")}
-                      className={`px-3 py-2 border-2 border-gray-200 rounded-md text-sm font-medium ${
-                        paymentMethod === "cash"
-                          ? "bg-orange-500 text-white border-orange-500"
-                          : "text-gray-700 hover:border-blue-400 hover:text-blue-600"
-                      }`}
+                      className={`px-3 py-2 border-2 border-gray-200 rounded-md text-sm font-medium ${paymentMethod === "cash"
+                        ? "bg-orange-500 text-white border-orange-500"
+                        : "text-gray-700 hover:border-blue-400 hover:text-blue-600"
+                        }`}
                     >
                       Cash
                     </button>
 
                     <button
                       onClick={() => handleSetPayment("debit")}
-                      className={`px-3 py-2 border-2 border-gray-200 rounded-md text-sm font-medium ${
-                        paymentMethod === "debit"
-                          ? "bg-orange-500 text-white border-orange-500"
-                          : "text-gray-700 hover:border-blue-400 hover:text-blue-600"
-                      }`}
+                      className={`px-3 py-2 border-2 border-gray-200 rounded-md text-sm font-medium ${paymentMethod === "debit"
+                        ? "bg-orange-500 text-white border-orange-500"
+                        : "text-gray-700 hover:border-blue-400 hover:text-blue-600"
+                        }`}
                     >
                       Debit Card
                     </button>
@@ -581,11 +577,10 @@ export default function PosPage() {
                         handleSetPayment("qr");
                         generateQR(subtotal, false);
                       }}
-                      className={`px-3 py-2 border-2 border-gray-200 rounded-md text-sm font-medium ${
-                        paymentMethod === "qr"
-                          ? "bg-orange-500 text-white border-orange-500"
-                          : "text-gray-700 hover:border-blue-400 hover:text-blue-600"
-                      }`}
+                      className={`px-3 py-2 border-2 border-gray-200 rounded-md text-sm font-medium ${paymentMethod === "qr"
+                        ? "bg-orange-500 text-white border-orange-500"
+                        : "text-gray-700 hover:border-blue-400 hover:text-blue-600"
+                        }`}
                     >
                       Scan QR
                     </button>

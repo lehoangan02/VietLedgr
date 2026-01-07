@@ -26,15 +26,39 @@ export default function AddProductPage() {
    const FASTAPI_URL = process.env.FASTAPI_URL || "http://localhost:8000";
 
    const [warehousesList, setWarehousesList] = useState<{ warehouse_id: string, name: string }[]>([]);
+   const [storesList, setStoresList] = useState<{ id: string, name: string }[]>([]);
+   const [categoriesList, setCategoriesList] = useState<{ category_id: string, retail_category: string }[]>([]);
+
    useEffect(() => {
       fetch(`${FASTAPI_URL}/api/warehouses/`)
          .then(res => res.json())
          .then(data => setWarehousesList(Array.isArray(data) ? data : (data.items ?? [])));
+
+      fetch('/api/stores/')
+         .then(res => res.json())
+         .then(data => {
+            console.log('Fetched stores data:', data);
+            setStoresList(Array.isArray(data) ? data : (data.items ?? []));
+         });
+
+      fetch(`${FASTAPI_URL}/api/products`)
+         .then(res => res.json())
+         .then(data => {
+            const arr = Array.isArray(data) ? data : (data.items ?? []);
+            // Extract unique retail_category/category_id pairs
+            const map = new Map<string, string>();
+            arr.forEach((p: any) => {
+               if (p.retail_category && p.category_id) {
+                  map.set(p.retail_category, p.category_id);
+               }
+            });
+            setCategoriesList(Array.from(map.entries()).map(([retail_category, category_id]) => ({ retail_category, category_id })));
+         });
    }, []);
 
    function generateSku() {
-      const code = 'PT' + Math.floor(1000 + Math.random() * 9000)
-      setSku(code)
+      const code = uuidv4();
+      setSku(code);
    }
 
    function onFiles(e: React.ChangeEvent<HTMLInputElement>) {
@@ -62,6 +86,10 @@ export default function AddProductPage() {
 
    async function onSubmit(e: React.FormEvent) {
       e.preventDefault()
+      // Find selected category_id
+      const selectedCategory = categoriesList.find(c => c.retail_category === category);
+      // Find selected store_id
+      const selectedStore = storesList.find(s => s.id === store);
       // 1. Prepare product payload
       const productPayload = {
          name: name,
@@ -69,10 +97,10 @@ export default function AddProductPage() {
          sku: sku,
          description: description,
          image_base64: images[0] ? await toBase64(images[0]) : undefined,
-         // need to change this part to map correct category and store IDs
-         category_id: 'df3bdfbf-1553-4f6c-a7a0-a3c7e0ccec2d',
-         store_id: 'd955be01-fde5-4b26-bf99-fef4454627ac',
+         category_id: selectedCategory?.category_id,
+         store_id: selectedStore?.id,
       }
+      console.log('Product Payload:', productPayload);
 
       try {
          // 2. Create product first
@@ -96,6 +124,7 @@ export default function AddProductPage() {
             expire_date: null,
             supplier_name: "Group 1"
          }
+         console.log('Batch Payload:', batchPayload);
 
          // 4. Create batch
          const batchRes = await fetch(`${FASTAPI_URL}/api/batches/`, {
@@ -143,8 +172,9 @@ export default function AddProductPage() {
                         <label className="text-sm text-gray-700">Store *</label>
                         <select value={store} onChange={(e) => setStore(e.target.value)} className="w-full mt-1 border rounded px-3 py-2">
                            <option value="">Select</option>
-                           <option value="wh1">Store 1</option>
-                           <option value="wh2">Store 2</option>
+                           {storesList.map((s, idx) => (
+                              <option key={`store-fix-${idx}`} value={s.id}>{s.name}</option>
+                           ))}
                         </select>
                      </div>
 
@@ -163,7 +193,12 @@ export default function AddProductPage() {
 
                      <div>
                         <label className="text-sm text-gray-700">Category *</label>
-                        <input value={category} onChange={(e) => setCategory(e.target.value)} className="w-full mt-1 border rounded px-3 py-2" />
+                        <select value={category} onChange={(e) => setCategory(e.target.value)} className="w-full mt-1 border rounded px-3 py-2">
+                           <option value="">Select</option>
+                           {Array.from(new Map(categoriesList.map(c => [c.retail_category, c])).values()).map((c, idx) => (
+                              <option key={`cat-fix-${idx}`} value={c.retail_category}>{c.retail_category}</option>
+                           ))}
+                        </select>
                      </div>
 
                      <div className="flex items-center gap-2">

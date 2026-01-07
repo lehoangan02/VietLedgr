@@ -221,9 +221,8 @@ export default function ProductTable({
                </thead>
                <tbody className="divide-y divide-gray-50">
                   {visible.length > 0 ? visible.map((p, i) => {
-                     console.log('Product SKU:', p.sku);
                      return (
-                        <tr key={p.product_id} className="group hover:bg-orange-50/30 transition-colors">
+                        <tr key={`prod-fix-${i}`} className="group hover:bg-orange-50/30 transition-colors">
                            <td className="py-4 pl-3 text-gray-400">{(page - 1) * pageSize + i + 1}</td>
                            <td className="py-4">
                               <div className="flex items-center gap-4">
