@@ -62,7 +62,7 @@ export default function Sidebar(role: { role: string | undefined }) {
     'Sales Management': '/sales',
     'Stores': '/stores',
     'Warehouses': '/warehouses',
-    'Customers Support': '/customers-support',
+    'Brands': '/brands',
     'Suppliers': '/suppliers',
     'Advanced': '/settings',
     'General Ledger': '/ledger',
