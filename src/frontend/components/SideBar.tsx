@@ -170,7 +170,7 @@ export default function Sidebar(role: { role: string | undefined }) {
                   )}
                   {s.items.map((it: any) => {
                     const route = routeMap[it];
-                    const isActive = route && pathname.startsWith(route);
+                    const isActive = route && pathname === route;
                     return (
                       <li
                         key={it}
