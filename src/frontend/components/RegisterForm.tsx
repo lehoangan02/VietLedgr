@@ -186,38 +186,6 @@ export default function RegisterForm() {
         >
           Sign In Instead
         </button>
-      </p>
-
-      <div className="text-center my-4 text-gray-300">— OR —</div>
-
-      <div className="flex gap-3">
-        <button
-          type="button"
-          aria-label="Continue with Facebook"
-          className="flex-1 flex items-center justify-center gap-2 bg-blue-600 text-white py-2 rounded-md"
-        >
-          <Facebook size={18} />
-          <span className="sr-only">Facebook</span>
-        </button>
-
-        <button
-          type="button"
-          aria-label="Continue with Google"
-          className="flex-1 flex items-center justify-center gap-2 bg-white border rounded-md"
-        >
-          <GoogleIcon />
-          <span className="sr-only">Google</span>
-        </button>
-
-        <button
-          type="button"
-          aria-label="Continue with GitHub"
-          className="flex-1 flex items-center justify-center gap-2 bg-slate-800 text-white rounded-md"
-        >
-          <Github size={18} />
-          <span className="sr-only">GitHub</span>
-        </button>
-      </div>
-    </div>
+      </p>    </div>
   );
 }

@@ -425,9 +425,7 @@ export default function PosPage() {
                     {p.img && p.img.trim() !== "" && (
                       <img
                         src={
-                          p.img.startsWith("http")
-                            ? p.img
-                            : `data:image/png;base64,${p.img}`
+                          p.img.startsWith('data:image') ? p.img : `data:image/png;base64,${p.img}`
                         }
                         alt={p.name}
                         className="max-h-32 object-contain"
