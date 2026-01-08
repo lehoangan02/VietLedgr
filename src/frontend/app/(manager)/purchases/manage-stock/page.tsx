@@ -4,7 +4,6 @@ import React, { useMemo, useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import type { StaticImageData } from 'next/image'
 import { Loader2, Package, AlertCircle, Truck } from 'lucide-react'
-import Sidebar from '@/components/SideBar'
 
 // --- Types ---
 type Product = {
@@ -245,11 +244,8 @@ export default function ManageStockPage() {
    }
 
    return (
-      <div className="w-full max-w-screen-2xl mx-auto flex gap-6 p-6 min-h-screen bg-gray-50">
-         <Sidebar />
-         <div className="flex-1">
-            <Content />
-         </div>
+      <div className="flex-1">
+         <Content />
       </div>
    )
 }

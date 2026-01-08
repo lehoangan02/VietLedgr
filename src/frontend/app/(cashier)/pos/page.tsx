@@ -175,10 +175,15 @@ export default function PosPage() {
   }, [productsInfo]);
 
   const products: Product[] = useMemo(() => {
+    // Map batch_id to cart quantity
+    const cartQtyMap: Record<string, number> = {};
+    for (const item of cartItems) {
+      cartQtyMap[item.product.sku] = item.qty;
+    }
     return batches.map((batch) => {
       const info = productMap[batch.product_id];
       const priceNum = Number(batch.sale_price) || 0;
-
+      const cartQty = cartQtyMap[batch.batch_id] || 0;
       return {
         sku: batch.batch_id,
         name: info?.name || batch.supplier_name || "",
@@ -187,7 +192,7 @@ export default function PosPage() {
         brand: info?.brand || "",
         unit: info?.unit || "",
         priceNum,
-        qty: batch.stock ?? 0,
+        qty: Math.max(0, (batch.stock ?? 0) - cartQty),
         orders: 0,
         expectedOutDays: daysUntil(batch.expire_date),
         warehouse_id: batch.warehouse_id,
@@ -196,7 +201,7 @@ export default function PosPage() {
           : undefined,
       };
     });
-  }, [batches, productMap]);
+  }, [batches, productMap, cartItems]);
 
   const categories = useMemo(
     () => Array.from(new Set(products.map((p) => p.category).filter(Boolean))),
@@ -232,6 +237,7 @@ export default function PosPage() {
   }, [cartItems]);
 
   const addToCart = useCallback((prod: Product) => {
+    if (prod.qty <= 0) return; // Prevent adding if out of stock
     setCart((prev) => {
       const existing = prev[prod.sku];
       const nextQty = existing ? existing.qty + 1 : 1;
@@ -263,8 +269,8 @@ export default function PosPage() {
   }, []);
 
   const generateQR = useCallback((total: number, print?: boolean) => {
-    const bankBin = "970422";
-    const accountNumber = "0898925210";
+    const bankBin = "970418";
+    const accountNumber = "5660567183";
     const description = encodeURIComponent("Payment");
     const url = `https://img.vietqr.io/image/${bankBin}-${accountNumber}-qr_only.png?amount=${Math.round(
       total,
@@ -393,11 +399,10 @@ export default function PosPage() {
             <div className="mb-4 flex items-center gap-2">
               <button
                 onClick={() => setCategory(null)}
-                className={`px-3 py-2 rounded ${
-                  category === null
-                    ? "bg-orange-500 text-white"
-                    : "bg-white border"
-                }`}
+                className={`px-3 py-2 rounded ${category === null
+                  ? "bg-orange-500 text-white"
+                  : "bg-white border"
+                  }`}
               >
                 All Categories
               </button>
@@ -405,11 +410,10 @@ export default function PosPage() {
                 <button
                   key={c}
                   onClick={() => setCategory((prev) => (prev === c ? null : c))}
-                  className={`px-3 py-2 rounded ${
-                    category === c
-                      ? "bg-orange-500 text-white"
-                      : "bg-white border"
-                  }`}
+                  className={`px-3 py-2 rounded ${category === c
+                    ? "bg-orange-500 text-white"
+                    : "bg-white border"
+                    }`}
                 >
                   {c}
                 </button>
@@ -427,9 +431,7 @@ export default function PosPage() {
                     {p.img && p.img.trim() !== "" && (
                       <img
                         src={
-                          p.img.startsWith("http")
-                            ? p.img
-                            : `data:image/png;base64,${p.img}`
+                          p.img.startsWith('data:image') ? p.img : `data:image/png;base64,${p.img}`
                         }
                         alt={p.name}
                         className="max-h-32 object-contain"
@@ -489,7 +491,7 @@ export default function PosPage() {
                       <img
                         src={
                           it.product.img
-                            ? it.product.img.startsWith("http")
+                            ? it.product.img.startsWith('data:image')
                               ? it.product.img
                               : `data:image/png;base64,${it.product.img}`
                             : ""
@@ -556,22 +558,20 @@ export default function PosPage() {
                   <div className="grid grid-cols-3 gap-2">
                     <button
                       onClick={() => handleSetPayment("cash")}
-                      className={`px-3 py-2 border-2 border-gray-200 rounded-md text-sm font-medium ${
-                        paymentMethod === "cash"
-                          ? "bg-orange-500 text-white border-orange-500"
-                          : "text-gray-700 hover:border-blue-400 hover:text-blue-600"
-                      }`}
+                      className={`px-3 py-2 border-2 border-gray-200 rounded-md text-sm font-medium ${paymentMethod === "cash"
+                        ? "bg-orange-500 text-white border-orange-500"
+                        : "text-gray-700 hover:border-blue-400 hover:text-blue-600"
+                        }`}
                     >
                       Cash
                     </button>
 
                     <button
                       onClick={() => handleSetPayment("debit")}
-                      className={`px-3 py-2 border-2 border-gray-200 rounded-md text-sm font-medium ${
-                        paymentMethod === "debit"
-                          ? "bg-orange-500 text-white border-orange-500"
-                          : "text-gray-700 hover:border-blue-400 hover:text-blue-600"
-                      }`}
+                      className={`px-3 py-2 border-2 border-gray-200 rounded-md text-sm font-medium ${paymentMethod === "debit"
+                        ? "bg-orange-500 text-white border-orange-500"
+                        : "text-gray-700 hover:border-blue-400 hover:text-blue-600"
+                        }`}
                     >
                       Debit Card
                     </button>
@@ -581,11 +581,10 @@ export default function PosPage() {
                         handleSetPayment("qr");
                         generateQR(subtotal, false);
                       }}
-                      className={`px-3 py-2 border-2 border-gray-200 rounded-md text-sm font-medium ${
-                        paymentMethod === "qr"
-                          ? "bg-orange-500 text-white border-orange-500"
-                          : "text-gray-700 hover:border-blue-400 hover:text-blue-600"
-                      }`}
+                      className={`px-3 py-2 border-2 border-gray-200 rounded-md text-sm font-medium ${paymentMethod === "qr"
+                        ? "bg-orange-500 text-white border-orange-500"
+                        : "text-gray-700 hover:border-blue-400 hover:text-blue-600"
+                        }`}
                     >
                       Scan QR
                     </button>

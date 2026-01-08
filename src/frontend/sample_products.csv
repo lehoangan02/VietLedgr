@@ -1,11 +1,12 @@
 name,retail_category,sku,description,category_id,store_id,warehouse_id,quantity,price,tax_type,discount_type,discount_value,quantity_alert
-Rice 5kg,FOOD,PT1001,Premium jasmine rice,df3bdfbf-1553-4f6c-a7a0-a3c7e0ccec2d,d955be01-fde5-4b26-bf99-fef4454627ac,c07aafd8-01a3-44ba-bd6e-7e2fc63db2fc
-,100,55000,vat,percent,5,10
-Instant Noodles,FOOD,PT1002,Chicken flavor instant noodles,df3bdfbf-1553-4f6c-a7a0-a3c7e0ccec2d,d955be01-fde5-4b26-bf99-fef4454627ac,4ee7c5fb-e2d1-4894-9f91-46a562345c34
-,200,3500,vat,fixed,100,20
-Electric Kettle,HOUSEHOLD,PT1003,1.7L electric kettle,df3bdfbf-1553-4f6c-a7a0-a3c7e0ccec2d,d955be01-fde5-4b26-bf99-fef4454627ac,a098494d-5792-40a2-a044-4635ef59a890,50,250000,vat,percent,10,5
-Notebook A5,STATIONERY,PT1004,200-page lined notebook,df3bdfbf-1553-4f6c-a7a0-a3c7e0ccec2d,d955be01-fde5-4b26-bf99-fef4454627ac,4ee7c5fb-e2d1-4894-9f91-46a562345c34
-,300,15000,vat,percent,0,30
-Reusable Bag,OTHERS,PT1005,Eco-friendly shopping bag,df3bdfbf-1553-4f6c-a7a0-a3c7e0ccec2d,d955be01-fde5-4b26-bf99-fef4454627ac,c07aafd8-01a3-44ba-bd6e-7e2fc63db2fc
-,80,8000,vat,fixed,0,8
-LED Desk Lamp,HOUSEHOLD,PT1006,Adjustable LED desk lamp with USB charging port,df3bdfbf-1553-4f6c-a7a0-a3c7e0ccec2d,d955be01-fde5-4b26-bf99-fef4454627ac,a098494d-5792-40a2-a044-4635ef59a890,40,450000,vat,percent,15,3
+Wireless Mouse,ELECTRONICS,PT1007,Ergonomic wireless mouse,df3bdfbf-1553-4f6c-a7a0-a3c7e0ccec2d,d955be01-fde5-4b26-bf99-fef4454627ac,4ee7c5fb-e2d1-4894-9f91-46a562345c34,120,120000,vat,percent,10,15
+Bluetooth Speaker,ELECTRONICS,PT1008,Portable Bluetooth speaker,df3bdfbf-1553-4f6c-a7a0-a3c7e0ccec2d,d955be01-fde5-4b26-bf99-fef4454627ac,a098494d-5792-40a2-a044-4635ef59a890,60,350000,vat,percent,12,8
+Ceramic Mug,HOUSEHOLD,PT1009,350ml ceramic coffee mug,df3bdfbf-1553-4f6c-a7a0-a3c7e0ccec2d,d955be01-fde5-4b26-bf99-fef4454627ac,c07aafd8-01a3-44ba-bd6e-7e2fc63db2fc,200,40000,vat,fixed,0,25
+Desk Organizer,STATIONERY,PT1010,Multi-compartment desk organizer,df3bdfbf-1553-4f6c-a7a0-a3c7e0ccec2d,d955be01-fde5-4b26-bf99-fef4454627ac,4ee7c5fb-e2d1-4894-9f91-46a562345c34,80,90000,vat,percent,5,10
+Hand Sanitizer,HEALTH,PT1011,Alcohol-based hand sanitizer 100ml,df3bdfbf-1553-4f6c-a7a0-a3c7e0ccec2d,d955be01-fde5-4b26-bf99-fef4454627ac,a098494d-5792-40a2-a044-4635ef59a890,150,25000,vat,percent,0,20
+USB Flash Drive,ELECTRONICS,PT1012,32GB USB 3.0 flash drive,df3bdfbf-1553-4f6c-a7a0-a3c7e0ccec2d,d955be01-fde5-4b26-bf99-fef4454627ac,c07aafd8-01a3-44ba-bd6e-7e2fc63db2fc,90,80000,vat,percent,8,12
+Laundry Detergent,HOUSEHOLD,PT1013,Liquid laundry detergent 2L,df3bdfbf-1553-4f6c-a7a0-a3c7e0ccec2d,d955be01-fde5-4b26-bf99-fef4454627ac,4ee7c5fb-e2d1-4894-9f91-46a562345c34,70,110000,vat,percent,7,10
+Sticky Notes,STATIONERY,PT1014,Pack of 100 sticky notes,df3bdfbf-1553-4f6c-a7a0-a3c7e0ccec2d,d955be01-fde5-4b26-bf99-fef4454627ac,a098494d-5792-40a2-a044-4635ef59a890,300,15000,vat,fixed,0,30
+Travel Umbrella,OTHERS,PT1015,Compact foldable umbrella,df3bdfbf-1553-4f6c-a7a0-a3c7e0ccec2d,d955be01-fde5-4b26-bf99-fef4454627ac,c07aafd8-01a3-44ba-bd6e-7e2fc63db2fc,60,95000,vat,percent,6,7
+Toothpaste,HEALTH,PT1016,Whitening toothpaste 150g,df3bdfbf-1553-4f6c-a7a0-a3c7e0ccec2d,d955be01-fde5-4b26-bf99-fef4454627ac,4ee7c5fb-e2d1-4894-9f91-46a562345c34,180,32000,vat,percent,0,18
+Yoga Mat,SPORTS,PT1017,Non-slip yoga mat 6mm,df3bdfbf-1553-4f6c-a7a0-a3c7e0ccec2d,d955be01-fde5-4b26-bf99-fef4454627ac,a098494d-5792-40a2-a044-4635ef59a890,50,220000,vat,percent,10,5
