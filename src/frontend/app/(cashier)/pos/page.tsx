@@ -175,10 +175,15 @@ export default function PosPage() {
   }, [productsInfo]);
 
   const products: Product[] = useMemo(() => {
+    // Map batch_id to cart quantity
+    const cartQtyMap: Record<string, number> = {};
+    for (const item of cartItems) {
+      cartQtyMap[item.product.sku] = item.qty;
+    }
     return batches.map((batch) => {
       const info = productMap[batch.product_id];
       const priceNum = Number(batch.sale_price) || 0;
-
+      const cartQty = cartQtyMap[batch.batch_id] || 0;
       return {
         sku: batch.batch_id,
         name: info?.name || batch.supplier_name || "",
@@ -187,7 +192,7 @@ export default function PosPage() {
         brand: info?.brand || "",
         unit: info?.unit || "",
         priceNum,
-        qty: batch.stock ?? 0,
+        qty: Math.max(0, (batch.stock ?? 0) - cartQty),
         orders: 0,
         expectedOutDays: daysUntil(batch.expire_date),
         warehouse_id: batch.warehouse_id,
@@ -196,7 +201,7 @@ export default function PosPage() {
           : undefined,
       };
     });
-  }, [batches, productMap]);
+  }, [batches, productMap, cartItems]);
 
   const categories = useMemo(
     () => Array.from(new Set(products.map((p) => p.category).filter(Boolean))),
@@ -232,6 +237,7 @@ export default function PosPage() {
   }, [cartItems]);
 
   const addToCart = useCallback((prod: Product) => {
+    if (prod.qty <= 0) return; // Prevent adding if out of stock
     setCart((prev) => {
       const existing = prev[prod.sku];
       const nextQty = existing ? existing.qty + 1 : 1;
@@ -485,7 +491,7 @@ export default function PosPage() {
                       <img
                         src={
                           it.product.img
-                            ? it.product.img.startsWith("http")
+                            ? it.product.img.startsWith('data:image')
                               ? it.product.img
                               : `data:image/png;base64,${it.product.img}`
                             : ""
